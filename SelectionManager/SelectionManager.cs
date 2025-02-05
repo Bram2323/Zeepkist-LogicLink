@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using ZeepSDK.LevelEditor;
 
 namespace LogicLink;
@@ -17,7 +18,6 @@ public class SelectionManager
     public SelectionManager(LEV_LevelEditorCentral central)
     {
         Central = central;
-        central.inspector.Action_NothingSelected += DeselectedEverything;
     }
 
 
@@ -102,7 +102,6 @@ public class SelectionManager
 
         if (selectedParts.NoneSelected)
         {
-            SelectedLogicBlocks.Remove(uid);
             DeselectBlock(uid);
             return;
         }
@@ -128,7 +127,6 @@ public class SelectionManager
     public void SelectBlock(string uid)
     {
         if (IsBlockSelected(uid)) return;
-
         BlockProperties block = GetBlockProperties(uid);
 
         List<string> selectionUIDs_before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
@@ -136,25 +134,121 @@ public class SelectionManager
         List<string> selectionUIDs_after = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
         Central.selection.RegisterManualSelectionBreakLock(selectionUIDs_before, selectionUIDs_after);
         UpdateGizmo();
+
+        Plugin.Logger.LogMessage("Selected block!");
     }
 
     public void DeselectBlock(string uid)
     {
+        SelectedLogicBlocks.Remove(uid);
+
         if (!IsBlockSelected(uid)) return;
+        BlockProperties block = GetBlockProperties(uid);
+
+        List<BlockProperties> list = Central.selection.list;
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (block == list[i])
+            {
+                Central.selection.RemoveBlockAt(i, false, false);
+                break;
+            }
+        }
 
         UpdateGizmo();
+
+        Plugin.Logger.LogMessage("Deselected block!");
     }
 
     public void UpdateGizmo()
     {
         List<BlockProperties> list = Central.selection.list;
         if (list.Count == 0) return;
-        Central.gizmos.SetNewBlockGridHeight(list[^-1].transform.position.y);
+        Central.gizmos.SetNewBlockGridHeight(list[^1].transform.position.y);
     }
 
 
-    public void DeselectedEverything()
+
+    public void TranslateBlock(BlockProperties block, Vector3 ogTranslation)
     {
+        string uid = block.UID;
+        if (!SelectedLogicBlocks.ContainsKey(uid))
+        {
+            block.transform.Translate(ogTranslation, Space.World);
+            return;
+        }
+
+        BlockEdit_LogicGate logicEdit = block.GetComponent<BlockEdit_LogicGate>();
+        if (logicEdit == null)
+        {
+            Plugin.Logger.LogMessage("Could not find BlockEdit component!");
+            return;
+        }
+
+
+        SelectedParts selectedParts = SelectedLogicBlocks[uid];
+        Vector3 translation = ogTranslation;
+        translation.z /= 16 * block.transform.localScale.z;
+        translation.y /= 16 * block.transform.localScale.y;
+        if (selectedParts.Head)
+        {
+            block.transform.Translate(ogTranslation, Space.World);
+
+            float distance1 = logicEdit.distance1;
+            float height1 = logicEdit.height1;
+            float distance2 = logicEdit.distance1;
+            float height2 = logicEdit.height1;
+
+            if (!selectedParts.Trigger1)
+            {
+                distance1 -= translation.z;
+                height1 -= translation.y;
+            }
+            if (!selectedParts.Trigger2)
+            {
+                distance2 -= translation.z;
+                height2 -= translation.y;
+            }
+
+            logicEdit.distance1 = distance1;
+            logicEdit.height1 = height1;
+            logicEdit.distance2 = distance2;
+            logicEdit.height2 = height2;
+
+            logicEdit.UpdateBooster(false);
+        }
+        else
+        {
+            float distance1 = logicEdit.distance1;
+            float height1 = logicEdit.height1;
+            float distance2 = logicEdit.distance1;
+            float height2 = logicEdit.height1;
+
+            if (selectedParts.Trigger1)
+            {
+                distance1 += translation.z;
+                height1 += translation.y;
+            }
+            if (selectedParts.Trigger2)
+            {
+                distance2 += translation.z;
+                height2 += translation.y;
+            }
+
+            logicEdit.distance1 = distance1;
+            logicEdit.height1 = height1;
+            logicEdit.distance2 = distance2;
+            logicEdit.height2 = height2;
+
+            logicEdit.UpdateBooster(false);
+        }
+    }
+
+
+
+    public void OnDeselectEverything()
+    {
+        Plugin.Logger.LogMessage("Deselected everything!");
         SelectedLogicBlocks.Clear();
     }
 }

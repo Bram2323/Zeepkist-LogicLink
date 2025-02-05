@@ -28,6 +28,6 @@
   </ItemGroup>
   
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy /y &quot;$(OutDir)/LogicLink.dll&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins&quot; " />
+    <Exec Command="if exist &quot;C:\Program Files (x86)\Steam\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins\&quot; copy /y &quot;$(OutDir)/LogicLink.dll&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins&quot; &#xD;&#xA;if exist &quot;D:\SteamLibrary\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins\&quot; copy /y &quot;$(OutDir)/LogicLink.dll&quot; &quot;D:\SteamLibrary\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins&quot;" />
   </Target>
 </Project>

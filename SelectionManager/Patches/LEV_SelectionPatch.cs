@@ -27,15 +27,38 @@ public class LEV_Selection_ClickBuilding
             BlockEdit_LogicGate logicEdit = parent.GetComponent<BlockEdit_LogicGate>();
             if (logicEdit == null) return true;
 
-            SelectionManager.Instance.ClickedOnPart(hit, __instance.central);
-
             Plugin.Logger.LogMessage($"Clicked on {raycastHit.transform.parent.name} | {raycastHit.transform.name}");
             Plugin.Logger.LogMessage($"Ball: {logicEdit.ballLogicBrain.useAsBallSpawner} | Two Input: {logicEdit.ballLogicBrain.useTwoInputs}");
+            SelectionManager.Instance.ClickedOnPart(hit);
 
             return false;
         }
 
         return true;
+    }
+}
+
+[HarmonyPatch(typeof(LEV_Selection), "TranslatePositions")]
+public class LEV_Selection_TranslatePositions
+{
+    private static bool Prefix(LEV_Selection __instance, Vector3 translation)
+    {
+        SelectionManager selectionManager = SelectionManager.Instance;
+        List<BlockProperties> list = __instance.list;
+        for (int i = 0; i < list.Count; i++)
+        {
+            selectionManager.TranslateBlock(list[i], translation);
+        }
+        return false;
+    }
+}
+
+[HarmonyPatch(typeof(LEV_Selection), "DeselectAllBlocks")]
+public class LEV_Selection_DeselectAllBlocks
+{
+    private static void Prefix()
+    {
+        SelectionManager.Instance.OnDeselectEverything();
     }
 }
 
