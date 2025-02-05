@@ -1,6 +1,9 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using HarmonyLib;
+using UnityEngine;
+using ZeepSDK.LevelEditor;
 
 namespace LogicLink;
 
@@ -8,34 +11,48 @@ namespace LogicLink;
 [BepInDependency("ZeepSDK")]
 public class Plugin : BaseUnityPlugin
 {
+    public static new ManualLogSource Logger;
+
     private Harmony harmony;
 
-    ConfigEntry<KeyboardShortcut> ChangeMoveMode;
-    ConfigEntry<KeyboardShortcut> ToggleTriggerPlane;
+    ConfigEntry<KeyCode> ChangeMoveMode;
+    ConfigEntry<KeyCode> ToggleTriggerPlane;
 
 
     private void Awake()
     {
+        Logger = base.Logger;
+
         harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
         harmony.PatchAll();
 
-        ChangeMoveMode = Config.Bind("Settings", "Change Move Mode", KeyboardShortcut.Empty, "Press to change the move mode");
-        ToggleTriggerPlane = Config.Bind("Settings", "Toggle Trigger Plane", KeyboardShortcut.Empty, "Press to toggle a plane to visualize the available movement of a trigger");
+        ChangeMoveMode = Config.Bind("Settings", "Change Move Mode", KeyCode.None, "Press to change the move mode");
+        ToggleTriggerPlane = Config.Bind("Settings", "Toggle Trigger Plane", KeyCode.None, "Press to toggle a plane to visualize the available movement of a trigger");
+
+        LevelEditorApi.EnteredLevelEditor += EnteredLevelEditor;
 
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
     }
 
     private void Update()
     {
-        if (ToggleTriggerPlane.Value.IsDown())
+        if (Input.GetKeyDown(ToggleTriggerPlane.Value))
         {
 
         }
     }
 
+    private void EnteredLevelEditor()
+    {
+        LEV_LevelEditorCentral central = FindObjectsOfType<LEV_LevelEditorCentral>()[0];
+        SelectionManager.Instance = new(central);
+    }
+
+
     private void OnDestroy()
     {
         harmony?.UnpatchSelf();
         harmony = null;
+        LevelEditorApi.EnteredLevelEditor -= EnteredLevelEditor;
     }
 }
