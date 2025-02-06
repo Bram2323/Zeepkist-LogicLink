@@ -190,14 +190,15 @@ public class SelectionManager
         Vector3 translation = ogTranslation;
         translation.z /= 16 * block.transform.localScale.z;
         translation.y /= 16 * block.transform.localScale.y;
+
+        float distance1 = logicEdit.distance1;
+        float height1 = logicEdit.height1;
+        float distance2 = logicEdit.distance2;
+        float height2 = logicEdit.height2;
+
         if (selectedParts.Head)
         {
             block.transform.Translate(ogTranslation, Space.World);
-
-            float distance1 = logicEdit.distance1;
-            float height1 = logicEdit.height1;
-            float distance2 = logicEdit.distance1;
-            float height2 = logicEdit.height1;
 
             if (!selectedParts.Trigger1)
             {
@@ -209,21 +210,9 @@ public class SelectionManager
                 distance2 -= translation.z;
                 height2 -= translation.y;
             }
-
-            logicEdit.distance1 = distance1;
-            logicEdit.height1 = height1;
-            logicEdit.distance2 = distance2;
-            logicEdit.height2 = height2;
-
-            logicEdit.UpdateBooster(false);
         }
         else
         {
-            float distance1 = logicEdit.distance1;
-            float height1 = logicEdit.height1;
-            float distance2 = logicEdit.distance1;
-            float height2 = logicEdit.height1;
-
             if (selectedParts.Trigger1)
             {
                 distance1 += translation.z;
@@ -234,14 +223,14 @@ public class SelectionManager
                 distance2 += translation.z;
                 height2 += translation.y;
             }
-
-            logicEdit.distance1 = distance1;
-            logicEdit.height1 = height1;
-            logicEdit.distance2 = distance2;
-            logicEdit.height2 = height2;
-
-            logicEdit.UpdateBooster(false);
         }
+
+        LEV_InspectorBridge bridge = logicEdit.properties2.bridge;
+        bridge.SetFloatValue(logicEdit.NUMBER_distance1, distance1);
+        bridge.SetFloatValue(logicEdit.NUMBER_height1, height1);
+        bridge.SetFloatValue(logicEdit.NUMBER_distance2, distance2);
+        bridge.SetFloatValue(logicEdit.NUMBER_height2, height2);
+        logicEdit.LogicValueChanged();
     }
 
 
