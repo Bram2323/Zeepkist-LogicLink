@@ -65,6 +65,15 @@ public class LEV_Selection_CalculateMiddlePivot
     }
 }
 
+[HarmonyPatch(typeof(LEV_Selection), "AddThisBlock")]
+public class LEV_Selection_AddThisBlock
+{
+    private static void Postfix(BlockProperties block)
+    {
+        SelectionManager.Instance.PaintBlock(block);
+    }
+}
+
 [HarmonyPatch(typeof(LEV_Selection), "DeselectAllBlocks")]
 public class LEV_Selection_DeselectAllBlocks
 {

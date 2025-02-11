@@ -9,6 +9,8 @@ namespace LogicLink;
 
 public class SelectionManager
 {
+    public static readonly Color DeselectedColor = Color.gray;
+
     public static SelectionManager Instance;
     public static MoveMode MoveMode = MoveMode.Combined;
 
@@ -35,6 +37,7 @@ public class SelectionManager
             MoveMode.Loose => MoveMode.Combined,
             _ => MoveMode.Combined,
         };
+        Instance?.PaintAllBlocks();
 
         MessengerApi.Log($"Move Mode set to {MoveMode}");
     }
@@ -53,6 +56,8 @@ public class SelectionManager
             SelectedParts selectedParts = new(logicBrain.useTwoInputs) { Head = true };
             SelectedLogicBlocks[block.UID] = selectedParts;
         }
+
+        PaintAllBlocks();
 
         UpdateGizmo();
         CalculateMiddlePivot(false);
@@ -73,6 +78,8 @@ public class SelectionManager
             SelectedLogicBlocks[block.UID] = selectedParts;
         }
 
+        PaintAllBlocks();
+
         UpdateGizmo();
         CalculateMiddlePivot(false);
     }
@@ -91,6 +98,8 @@ public class SelectionManager
             SelectedParts selectedParts = new(logicBrain.useTwoInputs) { Head = true, Trigger1 = true, Trigger2 = true };
             SelectedLogicBlocks[block.UID] = selectedParts;
         }
+
+        PaintAllBlocks();
 
         UpdateGizmo();
         CalculateMiddlePivot(false);
@@ -123,7 +132,7 @@ public class SelectionManager
             if (!SelectedLogicBlocks.ContainsKey(uid)) SelectedLogicBlocks[uid] = new(logicBrain.useTwoInputs);
             selectedParts = SelectedLogicBlocks[uid];
             SetPartSelected(selectedParts, partType, true);
-            UpdateBlockSelected(uid);
+            UpdateBlockSelected(logicBrain.properties);
             CalculateMiddlePivot(false);
             return;
         }
@@ -138,7 +147,7 @@ public class SelectionManager
             SetAllPartsSelected(selectedParts, false);
         }
 
-        UpdateBlockSelected(uid);
+        UpdateBlockSelected(logicBrain.properties);
         CalculateMiddlePivot(false);
     }
 
@@ -216,18 +225,19 @@ public class SelectionManager
     }
 
 
-    public void UpdateBlockSelected(string uid)
+    public void UpdateBlockSelected(BlockProperties block)
     {
-        if (!SelectedLogicBlocks.ContainsKey(uid)) return;
-        SelectedParts selectedParts = SelectedLogicBlocks[uid];
+        if (!SelectedLogicBlocks.ContainsKey(block.UID)) return;
+        SelectedParts selectedParts = SelectedLogicBlocks[block.UID];
 
         if (selectedParts.NoneSelected)
         {
-            DeselectBlock(uid);
+            DeselectBlock(block);
             return;
         }
 
-        SelectBlock(uid);
+        SelectBlock(block);
+        PaintBlock(block);
     }
 
 
@@ -240,15 +250,9 @@ public class SelectionManager
         return false;
     }
 
-    public BlockProperties GetBlockProperties(string uid)
+    public void SelectBlock(BlockProperties block)
     {
-        return Central.undoRedo.allBlocksDictionary[uid];
-    }
-
-    public void SelectBlock(string uid)
-    {
-        if (IsBlockSelected(uid)) return;
-        BlockProperties block = GetBlockProperties(uid);
+        if (IsBlockSelected(block.UID)) return;
 
         List<string> selectionUIDs_before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
         Central.selection.AddThisBlock(block);
@@ -259,12 +263,11 @@ public class SelectionManager
         Plugin.Logger.LogMessage("Selected block!");
     }
 
-    public void DeselectBlock(string uid)
+    public void DeselectBlock(BlockProperties block)
     {
-        SelectedLogicBlocks.Remove(uid);
+        SelectedLogicBlocks.Remove(block.UID);
 
-        if (!IsBlockSelected(uid)) return;
-        BlockProperties block = GetBlockProperties(uid);
+        if (!IsBlockSelected(block.UID)) return;
 
         List<BlockProperties> list = Central.selection.list;
         for (int i = 0; i < list.Count; i++)
@@ -281,13 +284,117 @@ public class SelectionManager
         Plugin.Logger.LogMessage("Deselected block!");
     }
 
+
+    public void PaintAllBlocks()
+    {
+        List<BlockProperties> list = Central.selection.list;
+
+        foreach (BlockProperties block in list)
+        {
+            if (!SelectedLogicBlocks.ContainsKey(block.UID)) continue;
+            PaintBlock(block);
+        }
+    }
+
+    public void PaintBlock(BlockProperties block)
+    {
+        if (!SelectedLogicBlocks.ContainsKey(block.UID)) return;
+        SelectedParts selectedParts = SelectedLogicBlocks[block.UID];
+        Material selectionPaint = Central.selection.selectionMaterial;
+
+        BlockEdit_LogicGate logicEdit = block.GetComponent<BlockEdit_LogicGate>();
+        if (logicEdit == null)
+        {
+            Plugin.Logger.LogWarning("Could not find BlockEdit_LogicGate!");
+            return;
+        }
+        v16BallLogicBrain logicBrain = logicEdit.ballLogicBrain;
+
+        if (MoveMode == MoveMode.Combined)
+        {
+            PaintEverything(block, true, selectionPaint);
+            return;
+        }
+
+        bool headSelected = selectedParts.Head;
+        bool trigger1Selected = selectedParts.Trigger1;
+        bool trigger2Selected = selectedParts.Trigger2;
+
+        if (logicBrain.moveBallSpawnerInsteadOfTrigger)
+        {
+            (trigger1Selected, headSelected) = (headSelected, trigger1Selected);
+        }
+
+        PaintEverything(block, headSelected, selectionPaint);
+        PaintTrigger(logicBrain.input1glow, trigger1Selected, selectionPaint);
+        if (logicBrain.useTwoInputs) PaintTrigger(logicBrain.input2glow, trigger2Selected, selectionPaint);
+    }
+
+    public void PaintEverything(BlockProperties block, bool selected, Material selectionPaint)
+    {
+        PaintEverything([.. block.dynamicSelectionRenderers], selected, selectionPaint);
+
+        Properties_RoadPainter roadPainter = block.GetComponent<Properties_RoadPainter>();
+        PaintEverything([.. roadPainter.renderers], selected, selectionPaint);
+    }
+
+    public void PaintEverything(Renderer[] renderers, bool selected, Material selectionPaint)
+    {
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Material[] array = new Material[renderers[i].materials.Length];
+            for (int j = 0; j < renderers[i].materials.Length; j++)
+            {
+                array[j] = GetMaterial(selected, selectionPaint);
+            }
+            renderers[i].sharedMaterials = array;
+        }
+    }
+
+    public void PaintTrigger(GameObject trigger, bool selected, Material selectionPaint)
+    {
+        MeshRenderer meshRenderer = trigger.GetComponent<MeshRenderer>();
+        if (meshRenderer == null)
+        {
+            Plugin.Logger.LogWarning("MeshRenderer was not found!");
+            return;
+        }
+
+        Material[] array = new Material[meshRenderer.materials.Length];
+        for (int j = 0; j < meshRenderer.materials.Length; j++)
+        {
+            array[j] = GetMaterial(selected, selectionPaint);
+        }
+        meshRenderer.sharedMaterials = array;
+    }
+
+    public Material GetMaterial(bool selected, Material selectionPaint)
+    {
+        if (selected)
+        {
+            return new(selectionPaint)
+            {
+                color = Color.HSVToRGB(UnityEngine.Random.Range(0f, 100f) / 100f, 1f, 0.25f),
+                name = UnityEngine.Random.Range(0, 10000).ToString()
+            };
+        }
+        else
+        {
+            return new(selectionPaint)
+            {
+                color = Color.HSVToRGB(0f, 0f, -0.5f),
+                name = UnityEngine.Random.Range(0, 10000).ToString()
+            };
+        }
+    }
+
+
     public void UpdateGizmo()
     {
         List<BlockProperties> list = Central.selection.list;
         if (list.Count == 0) return;
         Central.gizmos.SetNewBlockGridHeight(list[^1].transform.position.y);
     }
-
 
     public void CalculateMiddlePivot(bool forceDefault)
     {
