@@ -41,33 +41,61 @@ public class SelectionManager
 
     public void SelectHeads()
     {
-        BlockProperties[] list = Central.selection.list.ToArray();
+        BlockProperties[] list = [.. Central.selection.list];
         SelectedLogicBlocks.Clear();
 
         foreach (BlockProperties block in list)
         {
             BlockEdit_LogicGate logicEdit = block.GetComponent<BlockEdit_LogicGate>();
             if (logicEdit == null) continue;
+            v16BallLogicBrain logicBrain = logicEdit.ballLogicBrain;
 
-            SelectedParts selectedParts = new() { Head = true };
+            SelectedParts selectedParts = new(logicBrain.useTwoInputs) { Head = true };
             SelectedLogicBlocks[block.UID] = selectedParts;
         }
+
+        UpdateGizmo();
+        CalculateMiddlePivot(false);
     }
 
     public void SelectTriggers()
     {
-        BlockProperties[] list = Central.selection.list.ToArray();
+        BlockProperties[] list = [.. Central.selection.list];
         SelectedLogicBlocks.Clear();
 
         foreach (BlockProperties block in list)
         {
             BlockEdit_LogicGate logicEdit = block.GetComponent<BlockEdit_LogicGate>();
             if (logicEdit == null) continue;
+            v16BallLogicBrain logicBrain = logicEdit.ballLogicBrain;
 
-            SelectedParts selectedParts = new() { Trigger1 = true, Trigger2 = logicEdit.ballLogicBrain.useTwoInputs };
+            SelectedParts selectedParts = new(logicBrain.useTwoInputs) { Trigger1 = true, Trigger2 = true };
             SelectedLogicBlocks[block.UID] = selectedParts;
         }
+
+        UpdateGizmo();
+        CalculateMiddlePivot(false);
     }
+
+    public void SelectCombined()
+    {
+        BlockProperties[] list = [.. Central.selection.list];
+        SelectedLogicBlocks.Clear();
+
+        foreach (BlockProperties block in list)
+        {
+            BlockEdit_LogicGate logicEdit = block.GetComponent<BlockEdit_LogicGate>();
+            if (logicEdit == null) continue;
+            v16BallLogicBrain logicBrain = logicEdit.ballLogicBrain;
+
+            SelectedParts selectedParts = new(logicBrain.useTwoInputs) { Head = true, Trigger1 = true, Trigger2 = true };
+            SelectedLogicBlocks[block.UID] = selectedParts;
+        }
+
+        UpdateGizmo();
+        CalculateMiddlePivot(false);
+    }
+
 
     public void ClickedOnPart(Transform part)
     {
@@ -80,38 +108,34 @@ public class SelectionManager
 
         if (IsBlockSelected(uid) && !SelectedLogicBlocks.ContainsKey(uid))
         {
-            SelectedParts parts = new()
+            SelectedParts parts = new(logicBrain.useTwoInputs)
             {
                 Head = true,
                 Trigger1 = true,
-                Trigger2 = logicBrain.useTwoInputs,
+                Trigger2 = true,
             };
             SelectedLogicBlocks.Add(uid, parts);
         }
 
+        SelectedParts selectedParts;
         if (!Central.input.MultiSelect.buttonHeld || !SelectedLogicBlocks.ContainsKey(uid))
         {
-            SetPartSelected(uid, partType, true);
+            if (!SelectedLogicBlocks.ContainsKey(uid)) SelectedLogicBlocks[uid] = new(logicBrain.useTwoInputs);
+            selectedParts = SelectedLogicBlocks[uid];
+            SetPartSelected(selectedParts, partType, true);
             UpdateBlockSelected(uid);
             CalculateMiddlePivot(false);
             return;
         }
 
-        SelectedParts selectedParts = SelectedLogicBlocks[uid];
-        switch (partType)
+        selectedParts = SelectedLogicBlocks[uid];
+        if (MoveMode != MoveMode.Combined)
         {
-            case PartType.Head:
-                selectedParts.Head = !selectedParts.Head;
-                break;
-            case PartType.Trigger1:
-                selectedParts.Trigger1 = !selectedParts.Trigger1;
-                break;
-            case PartType.Trigger2:
-                selectedParts.Trigger2 = !selectedParts.Trigger2;
-                break;
-            case PartType.Unkown:
-            default:
-                break;
+            TogglePartSelected(selectedParts, partType);
+        }
+        else
+        {
+            SetAllPartsSelected(selectedParts, false);
         }
 
         UpdateBlockSelected(uid);
@@ -146,11 +170,8 @@ public class SelectionManager
         else return PartType.Head;
     }
 
-    public void SetPartSelected(string uid, PartType partType, bool selected)
+    public void SetPartSelected(SelectedParts selectedParts, PartType partType, bool selected)
     {
-        if (!SelectedLogicBlocks.ContainsKey(uid)) SelectedLogicBlocks[uid] = new();
-        SelectedParts selectedParts = SelectedLogicBlocks[uid];
-
         switch (partType)
         {
             case PartType.Head:
@@ -161,6 +182,32 @@ public class SelectionManager
                 break;
             case PartType.Trigger2:
                 selectedParts.Trigger2 = selected;
+                break;
+            case PartType.Unkown:
+            default:
+                break;
+        }
+    }
+
+    public void SetAllPartsSelected(SelectedParts selectedParts, bool selected)
+    {
+        selectedParts.Head = selected;
+        selectedParts.Trigger1 = selected;
+        selectedParts.Trigger2 = selected;
+    }
+
+    public void TogglePartSelected(SelectedParts selectedParts, PartType partType)
+    {
+        switch (partType)
+        {
+            case PartType.Head:
+                selectedParts.Head = !selectedParts.Head;
+                break;
+            case PartType.Trigger1:
+                selectedParts.Trigger1 = !selectedParts.Trigger1;
+                break;
+            case PartType.Trigger2:
+                selectedParts.Trigger2 = !selectedParts.Trigger2;
                 break;
             case PartType.Unkown:
             default:
@@ -246,6 +293,8 @@ public class SelectionManager
     {
         LEV_Selection selection = Central.selection;
         List<BlockProperties> list = selection.list;
+
+        if (list.Count == 0) return;
 
         if (list.Count > 1)
         {
@@ -375,7 +424,7 @@ public class SelectionManager
         }
 
         SelectedParts selectedParts = SelectedLogicBlocks[uid];
-        if (selectedParts.Head && selectedParts.Trigger1 && (selectedParts.Trigger2 || !logicEdit.ballLogicBrain.useTwoInputs))
+        if (selectedParts.AllSelected)
         {
             block.transform.Translate(ogTranslation, Space.World);
             return;
