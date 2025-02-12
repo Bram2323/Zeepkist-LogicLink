@@ -12,7 +12,7 @@ public class SelectionManager
     public static MoveMode MoveMode = MoveMode.Combined;
 
 
-    LEV_LevelEditorCentral Central;
+    public LEV_LevelEditorCentral Central;
     public Dictionary<string, SelectedParts> SelectedLogicBlocks = [];
 
     public bool DontBreakLock { get; private set; } = false;
@@ -41,6 +41,8 @@ public class SelectionManager
 
     public void SelectHeads()
     {
+        List<string> before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
+
         BlockProperties[] list = [.. Central.selection.list];
         SelectedLogicBlocks.Clear();
 
@@ -54,6 +56,9 @@ public class SelectionManager
             SelectedLogicBlocks[block.UID] = selectedParts;
         }
 
+        List<string> after = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
+        Central.selection.RegisterManualSelectionBreakLock(before, after);
+
         PaintAllBlocks();
 
         UpdateGizmo();
@@ -62,6 +67,8 @@ public class SelectionManager
 
     public void SelectTriggers()
     {
+        List<string> before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
+
         BlockProperties[] list = [.. Central.selection.list];
         SelectedLogicBlocks.Clear();
 
@@ -75,6 +82,9 @@ public class SelectionManager
             SelectedLogicBlocks[block.UID] = selectedParts;
         }
 
+        List<string> after = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
+        Central.selection.RegisterManualSelectionBreakLock(before, after);
+
         PaintAllBlocks();
 
         UpdateGizmo();
@@ -83,6 +93,8 @@ public class SelectionManager
 
     public void SelectCombined()
     {
+        List<string> before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
+
         BlockProperties[] list = [.. Central.selection.list];
         SelectedLogicBlocks.Clear();
 
@@ -95,6 +107,9 @@ public class SelectionManager
             SelectedParts selectedParts = new(logicBrain.useTwoInputs) { Head = true, Trigger1 = true, Trigger2 = true };
             SelectedLogicBlocks[block.UID] = selectedParts;
         }
+
+        List<string> after = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
+        Central.selection.RegisterManualSelectionBreakLock(before, after);
 
         PaintAllBlocks();
 
