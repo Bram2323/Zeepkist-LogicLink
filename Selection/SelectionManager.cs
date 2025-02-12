@@ -62,7 +62,7 @@ public class SelectionManager
         PaintAllBlocks();
 
         UpdateGizmo();
-        CalculateMiddlePivot(false);
+        Central.selection.CalculateMiddlePivot(false);
     }
 
     public void SelectTriggers()
@@ -88,7 +88,7 @@ public class SelectionManager
         PaintAllBlocks();
 
         UpdateGizmo();
-        CalculateMiddlePivot(false);
+        Central.selection.CalculateMiddlePivot(false);
     }
 
     public void SelectCombined()
@@ -114,7 +114,7 @@ public class SelectionManager
         PaintAllBlocks();
 
         UpdateGizmo();
-        CalculateMiddlePivot(false);
+        Central.selection.CalculateMiddlePivot(false);
     }
 
 
@@ -145,7 +145,7 @@ public class SelectionManager
             selectedParts = SelectedLogicBlocks[uid];
             SetPartSelected(selectedParts, partType, true);
             UpdateBlockSelected(logicBrain.properties);
-            CalculateMiddlePivot(false);
+            Central.selection.CalculateMiddlePivot(false);
             return;
         }
 
@@ -160,7 +160,7 @@ public class SelectionManager
         }
 
         UpdateBlockSelected(logicBrain.properties);
-        CalculateMiddlePivot(false);
+        Central.selection.CalculateMiddlePivot(false);
     }
 
 

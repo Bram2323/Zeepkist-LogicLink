@@ -4,6 +4,8 @@ using BepInEx.Logging;
 using HarmonyLib;
 using LogicLink.Plane;
 using LogicLink.Selection;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using ZeepSDK.LevelEditor;
 
@@ -13,32 +15,41 @@ namespace LogicLink;
 [BepInDependency("ZeepSDK")]
 public class Plugin : BaseUnityPlugin
 {
+    public static Plugin Instance;
     public static new ManualLogSource Logger;
+
 
     private Harmony harmony;
 
-    ConfigEntry<KeyCode> ChangeMoveMode;
-    ConfigEntry<KeyCode> SelectHeads;
-    ConfigEntry<KeyCode> SelectTriggers;
-    ConfigEntry<KeyCode> SelectCombined;
-    ConfigEntry<KeyCode> ToggleTriggerPlane;
+    public ConfigEntry<KeyCode> ChangeMoveMode;
+    public ConfigEntry<KeyCode> SelectHeads;
+    public ConfigEntry<KeyCode> SelectTriggers;
+    public ConfigEntry<KeyCode> SelectCombined;
+    public ConfigEntry<KeyCode> ToggleTriggerPlane;
+    public ConfigEntry<string> PlaneColor;
+    public Color DefaultPlaneColor = new(1, 1, 1, 0.5f);
 
 
     private void Awake()
     {
+        Instance = this;
         Logger = base.Logger;
 
         harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
         harmony.PatchAll();
 
-        ChangeMoveMode = Config.Bind("Settings", "Change Move Mode", KeyCode.None, "Press to change the move mode");
-        SelectHeads = Config.Bind("Settings", "Select Heads", KeyCode.None, "Select the heads from the current selection");
-        SelectTriggers = Config.Bind("Settings", "Select Triggers", KeyCode.None, "Select the triggers from the current selection");
-        SelectCombined = Config.Bind("Settings", "Select Combined", KeyCode.None, "Select both the heads and the triggers from the current selection");
-        ToggleTriggerPlane = Config.Bind("Settings", "Toggle Trigger Plane", KeyCode.None, "Press to toggle a plane to visualize the available movement of a trigger");
+        ChangeMoveMode = Config.Bind("Move Mode", "Change Move Mode", KeyCode.None, "Press to change the move mode");
+        SelectHeads = Config.Bind("Move Mode", "Select Heads", KeyCode.None, "Select the heads from the current selection");
+        SelectTriggers = Config.Bind("Move Mode", "Select Triggers", KeyCode.None, "Select the triggers from the current selection");
+        SelectCombined = Config.Bind("Move Mode", "Select Combined", KeyCode.None, "Select both the heads and the triggers from the current selection");
+        ToggleTriggerPlane = Config.Bind("Plane", "Toggle Plane", KeyCode.None, "Toggle a plane to visualize the available movement of a trigger");
+        PlaneColor = Config.Bind("Plane", "Plane Color", ColorUtility.ToHtmlStringRGBA(DefaultPlaneColor), "The color of the plane");
+
+        PlaneColor.SettingChanged += PlaneColorChanged;
 
         LevelEditorApi.EnteredLevelEditor += EnteredLevelEditor;
         LevelEditorApi.ExitedLevelEditor += ExitedLevelEditor;
+        LevelEditorApi.SelectionChanged += SelectionChanged;
 
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
     }
@@ -57,11 +68,35 @@ public class Plugin : BaseUnityPlugin
     {
         LEV_LevelEditorCentral central = FindObjectsOfType<LEV_LevelEditorCentral>()[0];
         SelectionManager.Instance = new(central);
+        PlaneManager.Instance = new(central.selection, ParsePlaneColor());
     }
 
     private void ExitedLevelEditor()
     {
         SelectionManager.Instance = null;
+        PlaneManager.Instance = null;
+    }
+
+    public void SelectionChanged(List<BlockProperties> selection)
+    {
+        PlaneManager.Instance?.SelectionChanged();
+    }
+
+    public void PlaneColorChanged(object sender, EventArgs e)
+    {
+        PlaneManager.Instance?.ColorChanged(ParsePlaneColor());
+    }
+
+    public Color ParsePlaneColor()
+    {
+        string colorString = PlaneColor.Value;
+        if (!colorString.StartsWith("#")) colorString = "#" + colorString;
+        if (!ColorUtility.TryParseHtmlString(colorString, out Color color))
+        {
+            Logger.LogWarning($"Could not parse {colorString} to a color, using default color instead!");
+            return DefaultPlaneColor;
+        }
+        return color;
     }
 
 
