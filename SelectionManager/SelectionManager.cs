@@ -322,7 +322,9 @@ public class SelectionManager
 
         if (logicBrain.moveBallSpawnerInsteadOfTrigger)
         {
+            Plugin.Logger.LogMessage($"Before: {headSelected} {trigger1Selected}");
             (trigger1Selected, headSelected) = (headSelected, trigger1Selected);
+            Plugin.Logger.LogMessage($"After: {headSelected} {trigger1Selected}");
         }
 
         PaintEverything(block, headSelected, selectionPaint);
@@ -335,7 +337,7 @@ public class SelectionManager
         PaintEverything([.. block.dynamicSelectionRenderers], selected, selectionPaint);
 
         Properties_RoadPainter roadPainter = block.GetComponent<Properties_RoadPainter>();
-        PaintEverything([.. roadPainter.renderers], selected, selectionPaint);
+        if (roadPainter != null) PaintEverything([.. roadPainter.renderers], selected, selectionPaint);
     }
 
     public void PaintEverything(Renderer[] renderers, bool selected, Material selectionPaint)
