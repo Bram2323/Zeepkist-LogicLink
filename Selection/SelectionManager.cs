@@ -1,11 +1,8 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
-using ZeepSDK.LevelEditor;
 using ZeepSDK.Messaging;
 
-namespace LogicLink;
+namespace LogicLink.Selection;
 
 public class SelectionManager
 {

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LogicLink;
+﻿namespace LogicLink.Selection;
 
 public enum MoveMode
 {

@@ -1,8 +1,8 @@
 using HarmonyLib;
-using LogicLink;
-using System;
-using System.Collections;
+using LogicLink.Selection;
 using System.Collections.Generic;
+
+namespace LogicLink.Patches;
 
 [HarmonyPatch(typeof(LEV_UndoRedo), "ConvertSelectionToStringList")]
 public class LEV_UndoRedo_ConvertSelectionToStringList

@@ -2,6 +2,8 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using LogicLink.Plane;
+using LogicLink.Selection;
 using UnityEngine;
 using ZeepSDK.LevelEditor;
 
@@ -47,6 +49,8 @@ public class Plugin : BaseUnityPlugin
         if (Input.GetKeyDown(SelectHeads.Value)) SelectionManager.Instance?.SelectHeads();
         if (Input.GetKeyDown(SelectTriggers.Value)) SelectionManager.Instance?.SelectTriggers();
         if (Input.GetKeyDown(SelectCombined.Value)) SelectionManager.Instance?.SelectCombined();
+
+        if (Input.GetKeyDown(ToggleTriggerPlane.Value)) PlaneManager.Instance?.TogglePlane();
     }
 
     private void EnteredLevelEditor()

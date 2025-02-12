@@ -1,9 +1,9 @@
 using HarmonyLib;
-using System;
+using LogicLink.Selection;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace LogicLink;
+namespace LogicLink.Patches;
 
 [HarmonyPatch(typeof(LEV_Selection), "ClickBuilding")]
 public class LEV_Selection_ClickBuilding

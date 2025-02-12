@@ -1,9 +1,7 @@
 using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using UnityEngine;
+using LogicLink.Selection;
 
-namespace LogicLink;
+namespace LogicLink.Patches;
 
 [HarmonyPatch(typeof(BlockEdit), "PropertyBreakLock")]
 public class BlockEdit_PropertyBreakLock

@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace LogicLink;
+namespace LogicLink.Selection;
 
 public enum PartType
 {
