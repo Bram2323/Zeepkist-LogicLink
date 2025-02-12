@@ -34,4 +34,35 @@ public class SelectedParts
     {
         UseTwoInputs = useTwoInputs;
     }
+
+    public string ToUidString()
+    {
+        string head = _head ? "1" : "0";
+        string trigger1 = _trigger1 ? "1" : "0";
+        string trigger2 = _trigger2 ? "1" : "0";
+        string useTwoInputs = UseTwoInputs ? "1" : "0";
+        return $"{head}{trigger1}{trigger2}{useTwoInputs}";
+    }
+
+    public static SelectedParts FromUidString(string uid)
+    {
+        if (uid.Length != 4)
+        {
+            throw new ArgumentException($"Tried to parse invalid string to SelectedParts! String: {uid}");
+        }
+
+        bool head = uid[0] == '1';
+        bool trigger1 = uid[1] == '1';
+        bool trigger2 = uid[2] == '1';
+        bool useTwoInputs = uid[3] == '1';
+
+        SelectedParts selectedParts = new(useTwoInputs)
+        {
+            Head = head,
+            Trigger1 = trigger1,
+            Trigger2 = trigger2
+        };
+
+        return selectedParts;
+    }
 }

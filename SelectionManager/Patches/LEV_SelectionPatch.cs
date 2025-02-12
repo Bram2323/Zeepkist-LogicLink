@@ -27,7 +27,10 @@ public class LEV_Selection_ClickBuilding
             BlockEdit_LogicGate logicEdit = parent.GetComponent<BlockEdit_LogicGate>();
             if (logicEdit == null) return true;
 
+            List<string> selectionUIDs_before = __instance.central.undoRedo.ConvertSelectionToStringList(__instance.central.selection.list);
             SelectionManager.Instance.ClickedOnPart(hit);
+            List<string> selectionUIDs_after = __instance.central.undoRedo.ConvertSelectionToStringList(__instance.central.selection.list);
+            __instance.RegisterManualSelectionBreakLock(selectionUIDs_before, selectionUIDs_after);
 
             return false;
         }
@@ -79,7 +82,7 @@ public class LEV_Selection_DeselectAllBlocks
 {
     private static void Prefix()
     {
-        SelectionManager.Instance.OnDeselectEverything();
+        LEV_UndoRedo_ConvertSelectionToStringList.FromDeselectAll = true;
     }
 }
 

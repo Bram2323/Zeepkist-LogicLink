@@ -16,7 +16,7 @@ public class SelectionManager
 
 
     LEV_LevelEditorCentral Central;
-    Dictionary<string, SelectedParts> SelectedLogicBlocks = [];
+    public Dictionary<string, SelectedParts> SelectedLogicBlocks = [];
 
     public bool DontBreakLock { get; private set; } = false;
 
@@ -254,10 +254,7 @@ public class SelectionManager
     {
         if (IsBlockSelected(block.UID)) return;
 
-        List<string> selectionUIDs_before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
         Central.selection.AddThisBlock(block);
-        List<string> selectionUIDs_after = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
-        Central.selection.RegisterManualSelectionBreakLock(selectionUIDs_before, selectionUIDs_after);
         UpdateGizmo();
 
         Plugin.Logger.LogMessage("Selected block!");
@@ -322,9 +319,7 @@ public class SelectionManager
 
         if (logicBrain.moveBallSpawnerInsteadOfTrigger)
         {
-            Plugin.Logger.LogMessage($"Before: {headSelected} {trigger1Selected}");
             (trigger1Selected, headSelected) = (headSelected, trigger1Selected);
-            Plugin.Logger.LogMessage($"After: {headSelected} {trigger1Selected}");
         }
 
         PaintEverything(block, headSelected, selectionPaint);
