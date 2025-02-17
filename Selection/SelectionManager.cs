@@ -1,5 +1,7 @@
+using LogicLink;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 using ZeepSDK.Messaging;
 
 namespace LogicLink.Selection;
@@ -30,13 +32,14 @@ public class SelectionManager
         MoveMode = MoveMode switch
         {
             MoveMode.Combined => MoveMode.Strict,
-            MoveMode.Strict => MoveMode.Loose,
-            MoveMode.Loose => MoveMode.Combined,
+            MoveMode.Strict => MoveMode.LoosePosition,
+            MoveMode.LoosePosition => MoveMode.LooseRotation,
+            MoveMode.LooseRotation => MoveMode.Combined,
             _ => MoveMode.Combined,
         };
         Instance?.PaintAllBlocks();
 
-        MessengerApi.Log($"Move Mode set to {MoveMode}");
+        MessengerApi.Log($"Move Mode set to {MoveMode.ToReadableString()}");
     }
 
     public void SelectHeads()
@@ -526,9 +529,10 @@ public class SelectionManager
     public void TranslateBlock(BlockProperties block, Vector3 ogTranslation)
     {
         string uid = block.UID;
+        Transform transform = block.transform;
         if (!SelectedLogicBlocks.ContainsKey(uid) || MoveMode == MoveMode.Combined)
         {
-            block.transform.Translate(ogTranslation, Space.World);
+            transform.Translate(ogTranslation, Space.World);
             return;
         }
 
@@ -542,11 +546,11 @@ public class SelectionManager
         SelectedParts selectedParts = SelectedLogicBlocks[uid];
         if (selectedParts.AllSelected)
         {
-            block.transform.Translate(ogTranslation, Space.World);
+            transform.Translate(ogTranslation, Space.World);
             return;
         }
 
-        Vector3 translation = block.transform.InverseTransformVector(ogTranslation);
+        Vector3 translation = transform.InverseTransformVector(ogTranslation);
         if (MoveMode == MoveMode.Strict) translation.x = 0;
 
         float distance1 = logicEdit.distance1 * 16;
@@ -554,41 +558,55 @@ public class SelectionManager
         float distance2 = logicEdit.distance2 * 16;
         float height2 = logicEdit.height2 * 16;
 
+        Vector3 localTranslation = translation.Multiply(transform.localScale);
         if (selectedParts.Head)
         {
-            Vector3 scale = block.transform.localScale;
-            Vector3 localTranslation = new(translation.x * scale.x, translation.y * scale.y, translation.z * scale.z);
-            block.transform.Translate(localTranslation, Space.Self);
+            Vector3 looseTranslation = localTranslation;
+            if (MoveMode != MoveMode.LoosePosition) looseTranslation.x = 0;
+            transform.Translate(looseTranslation, Space.Self);
 
-            if (!selectedParts.Trigger1)
-            {
-                distance1 -= translation.z;
-                height1 -= translation.y;
-            }
-            if (!selectedParts.Trigger2)
-            {
-                distance2 -= translation.z;
-                height2 -= translation.y;
-            }
+            distance1 -= translation.z;
+            height1 -= translation.y;
+            distance2 -= translation.z;
+            height2 -= translation.y;
         }
-        else
+        else if (MoveMode == MoveMode.LoosePosition)
         {
-            if (MoveMode == MoveMode.Loose)
+            Vector3 looseTranslation = localTranslation;
+            looseTranslation.y = 0;
+            looseTranslation.z = 0;
+            transform.Translate(looseTranslation, Space.Self);
+        }
+
+        if (selectedParts.Trigger1)
+        {
+            distance1 += translation.z;
+            height1 += translation.y;
+        }
+        if (selectedParts.Trigger2)
+        {
+            distance2 += translation.z;
+            height2 += translation.y;
+        }
+
+        float xDistance = localTranslation.x;
+        if (MoveMode == MoveMode.LooseRotation || !Mathf.Approximately(xDistance, 0))
+        {
+            float avgDistance = distance1;
+            if (selectedParts.UseTwoInputs)
             {
-                Vector3 scale = block.transform.localScale;
-                Vector3 looseTranslation = new(translation.x * scale.x, 0, 0);
-                block.transform.Translate(looseTranslation, Space.Self);
+                avgDistance += distance2;
+                avgDistance /= 2;
             }
 
-            if (selectedParts.Trigger1)
+
+            if (!Mathf.Approximately(avgDistance, 0))
             {
-                distance1 += translation.z;
-                height1 += translation.y;
+
             }
-            if (selectedParts.Trigger2)
+            else
             {
-                distance2 += translation.z;
-                height2 += translation.y;
+                transform.Rotate(transform.up, 90);
             }
         }
 

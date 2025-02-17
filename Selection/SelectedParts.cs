@@ -6,6 +6,7 @@ public class SelectedParts
 {
     public bool NoneSelected => !Head && !Trigger1 && !Trigger2;
     public bool AllSelected => Head && Trigger1 && (Trigger2 || !UseTwoInputs);
+    public bool AnyTrigger => Trigger1 || Trigger2;
 
     bool _head;
     bool _trigger1;

@@ -4,5 +4,6 @@ public enum MoveMode
 {
     Combined,
     Strict,
-    Loose,
+    LoosePosition,
+    LooseRotation,
 }
