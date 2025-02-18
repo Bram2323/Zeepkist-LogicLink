@@ -104,9 +104,10 @@ public class PlaneManager
         MeshRenderer meshRenderer = plane.GetComponent<MeshRenderer>();
 
         if (PlaneMaterial == null) PlaneMaterial = CreatePlaneMaterial(meshRenderer.sharedMaterial);
-
         meshRenderer.material = PlaneMaterial;
         meshRenderer.sharedMaterial = PlaneMaterial;
+
+        meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
         return plane;
     }
