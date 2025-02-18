@@ -638,7 +638,6 @@ public class SelectionManager
                 distance1 += deltaDistance;
                 distance2 += deltaDistance;
 
-                Plugin.Logger.LogMessage(degrees + " | " + avgDistance + " | " + newPoint.magnitude + " | " + deltaDistance);
                 transform.Rotate(Vector2.up, degrees);
             }
         }

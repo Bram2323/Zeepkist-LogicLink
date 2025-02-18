@@ -31,7 +31,7 @@ public class PlaneManager
 
         if (!PlaneEnabled)
         {
-            if (PlaneObject != null) UnityEngine.Object.Destroy(PlaneObject);
+            if (PlaneObject != null) Object.Destroy(PlaneObject);
             return;
         }
 
@@ -42,6 +42,34 @@ public class PlaneManager
     {
         if (!PlaneEnabled) return;
         SetPlaneAtLastSelectedObject();
+    }
+
+    public void SelectionDuplicated()
+    {
+        Object.DestroyImmediate(PlaneObject);
+    }
+
+    public void SetPlaneAtLastSelectedObject()
+    {
+        if (PlaneObject == null) PlaneObject = CreatePlaneObject();
+
+        List<BlockProperties> list = Selection.list;
+        if (list.Count == 0)
+        {
+            PlaneObject.SetActive(false);
+            return;
+        }
+
+        Transform lastBlock = list[^1].transform;
+        PlaneObject.SetActive(true);
+
+        PlaneObject.transform.SetParent(lastBlock, false);
+        Vector3 blockScale = lastBlock.localScale;
+        PlaneObject.transform.localScale = new(
+            PlaneScale.x / blockScale.x,
+            PlaneScale.y / blockScale.y,
+            PlaneScale.z / blockScale.z
+        );
     }
 
     public void ColorChanged(Color newColor)
@@ -96,28 +124,5 @@ public class PlaneManager
         material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
 
         return material;
-    }
-
-    public void SetPlaneAtLastSelectedObject()
-    {
-        if (PlaneObject == null) PlaneObject = CreatePlaneObject();
-
-        List<BlockProperties> list = Selection.list;
-        if (list.Count == 0)
-        {
-            PlaneObject.SetActive(false);
-            return;
-        }
-
-        Transform lastBlock = list[^1].transform;
-        PlaneObject.SetActive(true);
-
-        PlaneObject.transform.SetParent(lastBlock, false);
-        Vector3 blockScale = lastBlock.localScale;
-        PlaneObject.transform.localScale = new(
-            PlaneScale.x / blockScale.x,
-            PlaneScale.y / blockScale.y,
-            PlaneScale.z / blockScale.z
-        );
     }
 }
