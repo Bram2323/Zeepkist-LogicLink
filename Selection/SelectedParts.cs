@@ -4,9 +4,10 @@ namespace LogicLink.Selection;
 
 public class SelectedParts
 {
-    public bool NoneSelected => !Head && !Trigger1 && !Trigger2;
-    public bool AllSelected => Head && Trigger1 && (Trigger2 || !UseTwoInputs);
+    public bool NoneSelected => !Head && !AnyTrigger;
+    public bool AllSelected => Head && AllTriggers;
     public bool AnyTrigger => Trigger1 || Trigger2;
+    public bool AllTriggers => Trigger1 && (Trigger2 || !UseTwoInputs);
 
     bool _head;
     bool _trigger1;

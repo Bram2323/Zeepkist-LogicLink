@@ -1,4 +1,5 @@
 using LogicLink;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -9,6 +10,7 @@ namespace LogicLink.Selection;
 public class SelectionManager
 {
     public static readonly Color DeselectedColor = Color.gray;
+    public const float LooseRotationDeadZone = 0.1f;
 
     public static SelectionManager Instance;
     public static MoveMode MoveMode = MoveMode.Combined;
@@ -29,15 +31,32 @@ public class SelectionManager
 
     public static void CycleMode()
     {
-        MoveMode = MoveMode switch
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
         {
-            MoveMode.Combined => MoveMode.Strict,
-            MoveMode.Strict => MoveMode.LoosePosition,
-            MoveMode.LoosePosition => MoveMode.LooseRotation,
-            MoveMode.LooseRotation => MoveMode.Combined,
-            _ => MoveMode.Combined,
-        };
+            MoveMode = MoveMode switch
+            {
+                MoveMode.Combined => MoveMode.LooseRotation,
+                MoveMode.Strict => MoveMode.Combined,
+                MoveMode.LoosePosition => MoveMode.Strict,
+                MoveMode.LooseRotation => MoveMode.LoosePosition,
+                _ => MoveMode.Combined,
+            };
+        }
+        else
+        {
+            MoveMode = MoveMode switch
+            {
+                MoveMode.Combined => MoveMode.Strict,
+                MoveMode.Strict => MoveMode.LoosePosition,
+                MoveMode.LoosePosition => MoveMode.LooseRotation,
+                MoveMode.LooseRotation => MoveMode.Combined,
+                _ => MoveMode.Combined,
+            };
+        }
+
         Instance?.PaintAllBlocks();
+        Instance?.UpdateGizmo();
+        Instance?.CalculateMiddlePivot(false);
 
         MessengerApi.Log($"Move Mode set to {MoveMode.ToReadableString()}");
     }
@@ -332,6 +351,12 @@ public class SelectionManager
         bool trigger1Selected = selectedParts.Trigger1;
         bool trigger2Selected = selectedParts.Trigger2;
 
+        if (MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger)
+        {
+            trigger1Selected = true;
+            trigger2Selected = true;
+        }
+
         if (logicBrain.moveBallSpawnerInsteadOfTrigger)
         {
             (trigger1Selected, headSelected) = (headSelected, trigger1Selected);
@@ -502,7 +527,7 @@ public class SelectionManager
             avgPosition += block.transform.position;
             amount++;
         }
-        if (selectedParts.Trigger1)
+        if (selectedParts.Trigger1 || (MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger))
         {
             if (logicBrain.moveBallSpawnerInsteadOfTrigger)
             {
@@ -514,7 +539,7 @@ public class SelectionManager
             }
             amount++;
         }
-        if (selectedParts.Trigger2)
+        if (selectedParts.Trigger2 || (MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger && selectedParts.UseTwoInputs))
         {
             avgPosition += logicBrain.input2selector.transform.position;
             amount++;
@@ -544,7 +569,8 @@ public class SelectionManager
         }
 
         SelectedParts selectedParts = SelectedLogicBlocks[uid];
-        if (selectedParts.AllSelected)
+        if (selectedParts.AllSelected ||
+            (MoveMode == MoveMode.LooseRotation && selectedParts.Head && selectedParts.AnyTrigger))
         {
             transform.Translate(ogTranslation, Space.World);
             return;
@@ -562,7 +588,7 @@ public class SelectionManager
         if (selectedParts.Head)
         {
             Vector3 looseTranslation = localTranslation;
-            if (MoveMode != MoveMode.LoosePosition) looseTranslation.x = 0;
+            looseTranslation.x = 0;
             transform.Translate(looseTranslation, Space.Self);
 
             distance1 -= translation.z;
@@ -570,7 +596,8 @@ public class SelectionManager
             distance2 -= translation.z;
             height2 -= translation.y;
         }
-        else if (MoveMode == MoveMode.LoosePosition)
+
+        if (MoveMode == MoveMode.LoosePosition || (MoveMode == MoveMode.LooseRotation && selectedParts.Head))
         {
             Vector3 looseTranslation = localTranslation;
             looseTranslation.y = 0;
@@ -578,19 +605,20 @@ public class SelectionManager
             transform.Translate(looseTranslation, Space.Self);
         }
 
-        if (selectedParts.Trigger1)
+        if (selectedParts.Trigger1 || (MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger))
         {
             distance1 += translation.z;
             height1 += translation.y;
         }
-        if (selectedParts.Trigger2)
+        if (selectedParts.Trigger2 || (MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger))
         {
             distance2 += translation.z;
             height2 += translation.y;
         }
 
         float xDistance = localTranslation.x;
-        if (MoveMode == MoveMode.LooseRotation || !Mathf.Approximately(xDistance, 0))
+        xDistance /= transform.localScale.z;
+        if (MoveMode == MoveMode.LooseRotation && !Mathf.Approximately(xDistance, 0))
         {
             float avgDistance = distance1;
             if (selectedParts.UseTwoInputs)
@@ -599,25 +627,38 @@ public class SelectionManager
                 avgDistance /= 2;
             }
 
+            Vector2 newPoint = new(avgDistance, xDistance);
 
-            if (!Mathf.Approximately(avgDistance, 0))
+            if (newPoint.magnitude > LooseRotationDeadZone)
             {
+                float degrees = Mathf.Atan2(newPoint.y, newPoint.x) * Mathf.Rad2Deg;
+                if (selectedParts.Head) degrees = -degrees;
+                float deltaDistance = newPoint.magnitude - avgDistance;
 
-            }
-            else
-            {
-                transform.Rotate(transform.up, 90);
+                distance1 += deltaDistance;
+                distance2 += deltaDistance;
+
+                Plugin.Logger.LogMessage(degrees + " | " + avgDistance + " | " + newPoint.magnitude + " | " + deltaDistance);
+                transform.Rotate(Vector2.up, degrees);
             }
         }
 
+        distance1 /= 16;
+        height1 /= 16;
+        distance2 /= 16;
+        height2 /= 16;
 
-        if (Mathf.Approximately(translation.z, 0) && Mathf.Approximately(translation.y, 0)) return;
+        if (Mathf.Approximately(distance1, logicEdit.distance1) && Mathf.Approximately(height1, logicEdit.height1) &&
+            Mathf.Approximately(distance2, logicEdit.distance2) && Mathf.Approximately(height2, logicEdit.height2))
+        {
+            return;
+        }
 
         LEV_InspectorBridge bridge = logicEdit.properties2.bridge;
-        bridge.SetFloatValue(logicEdit.NUMBER_distance1, distance1 / 16);
-        bridge.SetFloatValue(logicEdit.NUMBER_height1, height1 / 16);
-        bridge.SetFloatValue(logicEdit.NUMBER_distance2, distance2 / 16);
-        bridge.SetFloatValue(logicEdit.NUMBER_height2, height2 / 16);
+        bridge.SetFloatValue(logicEdit.NUMBER_distance1, distance1);
+        bridge.SetFloatValue(logicEdit.NUMBER_height1, height1);
+        bridge.SetFloatValue(logicEdit.NUMBER_distance2, distance2);
+        bridge.SetFloatValue(logicEdit.NUMBER_height2, height2);
 
         DontBreakLock = true;
         logicEdit.LogicValueChanged();
