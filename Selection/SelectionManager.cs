@@ -54,15 +54,20 @@ public class SelectionManager
             };
         }
 
-        Instance?.PaintAllBlocks();
-        Instance?.UpdateGizmo();
-        Instance?.CalculateMiddlePivot(false);
+        if (Instance != null && Instance.Central.selection.list.Count != 0)
+        {
+            Instance.PaintAllBlocks();
+            Instance.UpdateGizmo();
+            Instance.CalculateMiddlePivot(false);
+        }
 
         MessengerApi.Log($"Move Mode set to {MoveMode.ToReadableString()}");
     }
 
     public void SelectHeads()
     {
+        if (Central.selection.list.Count == 0) return;
+
         List<string> before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
 
         BlockProperties[] list = [.. Central.selection.list];
@@ -89,6 +94,8 @@ public class SelectionManager
 
     public void SelectTriggers()
     {
+        if (Central.selection.list.Count == 0) return;
+
         List<string> before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
 
         BlockProperties[] list = [.. Central.selection.list];
@@ -115,6 +122,8 @@ public class SelectionManager
 
     public void SelectCombined()
     {
+        if (Central.selection.list.Count == 0) return;
+
         List<string> before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
 
         BlockProperties[] list = [.. Central.selection.list];
