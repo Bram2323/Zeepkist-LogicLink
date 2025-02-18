@@ -1,5 +1,5 @@
 # Logic Link
-Logic Link is a mod for Zeepkist that adds some quality of life feateres for logic blocks!
+Logic Link is a mod for Zeepkist that adds some quality of life features for logic blocks!
 
 ## Features
 Select logic trigger and head parts independently with multiple move modes!
