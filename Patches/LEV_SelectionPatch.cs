@@ -61,8 +61,6 @@ public class LEV_Selection_CalculateMiddlePivot
 {
     private static bool Prefix(bool forceDefault)
     {
-        if (SelectionManager.MoveMode == MoveMode.Combined) return true;
-
         SelectionManager.Instance.CalculateMiddlePivot(forceDefault);
         return false;
     }

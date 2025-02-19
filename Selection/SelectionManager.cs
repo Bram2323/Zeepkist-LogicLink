@@ -9,7 +9,7 @@ namespace LogicLink.Selection;
 
 public class SelectionManager
 {
-    public static readonly Color DeselectedColor = Color.gray;
+    public static readonly Color DeselectedColor = Color.HSVToRGB(0f, 0f, -0.5f);
     public const float LooseRotationDeadZone = 0.1f;
 
     public static SelectionManager Instance;
@@ -20,6 +20,18 @@ public class SelectionManager
     public Dictionary<string, SelectedParts> SelectedLogicBlocks = [];
 
     public bool DontBreakLock { get; private set; } = false;
+
+    bool _isGrabbingOrDragging = false;
+    public bool IsGrabbingOrDragging
+    {
+        get { return _isGrabbingOrDragging; }
+        set
+        {
+            if (_isGrabbingOrDragging == value) return;
+            _isGrabbingOrDragging = value;
+            GrabbingOrDraggingChanged();
+        }
+    }
 
 
 
@@ -181,14 +193,7 @@ public class SelectionManager
         }
 
         selectedParts = SelectedLogicBlocks[uid];
-        if (MoveMode != MoveMode.Combined)
-        {
-            TogglePartSelected(selectedParts, partType);
-        }
-        else
-        {
-            SetAllPartsSelected(selectedParts, false);
-        }
+        TogglePartSelected(selectedParts, partType);
 
         UpdateBlockSelected(logicBrain.properties);
         Central.selection.CalculateMiddlePivot(false);
@@ -325,6 +330,11 @@ public class SelectionManager
     }
 
 
+    public void GrabbingOrDraggingChanged()
+    {
+        if (MoveMode == MoveMode.Combined || MoveMode == MoveMode.LooseRotation) PaintAllBlocks();
+    }
+
     public void PaintAllBlocks()
     {
         List<BlockProperties> list = Central.selection.list;
@@ -350,7 +360,7 @@ public class SelectionManager
         }
         v16BallLogicBrain logicBrain = logicEdit.ballLogicBrain;
 
-        if (MoveMode == MoveMode.Combined)
+        if (IsGrabbingOrDragging && MoveMode == MoveMode.Combined)
         {
             PaintEverything(block, true, selectionPaint);
             return;
@@ -360,7 +370,7 @@ public class SelectionManager
         bool trigger1Selected = selectedParts.Trigger1;
         bool trigger2Selected = selectedParts.Trigger2;
 
-        if (MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger)
+        if (IsGrabbingOrDragging && MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger)
         {
             trigger1Selected = true;
             trigger2Selected = true;
@@ -428,7 +438,7 @@ public class SelectionManager
         {
             return new(selectionPaint)
             {
-                color = Color.HSVToRGB(0f, 0f, -0.5f),
+                color = DeselectedColor,
                 name = UnityEngine.Random.Range(0, 10000).ToString()
             };
         }
@@ -536,7 +546,7 @@ public class SelectionManager
             avgPosition += block.transform.position;
             amount++;
         }
-        if (selectedParts.Trigger1 || (MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger))
+        if (selectedParts.Trigger1)
         {
             if (logicBrain.moveBallSpawnerInsteadOfTrigger)
             {
@@ -548,7 +558,7 @@ public class SelectionManager
             }
             amount++;
         }
-        if (selectedParts.Trigger2 || (MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger && selectedParts.UseTwoInputs))
+        if (selectedParts.Trigger2)
         {
             avgPosition += logicBrain.input2selector.transform.position;
             amount++;
