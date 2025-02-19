@@ -60,11 +60,18 @@ public class PlaneManager
             return;
         }
 
-        Transform lastBlock = list[^1].transform;
+        BlockProperties lastBlock = list[^1];
+        if (!Plugin.Instance.AlwaysShowPlane.Value && !lastBlock.TryGetComponent(out BlockEdit_LogicGate _))
+        {
+            PlaneObject.SetActive(false);
+            return;
+        }
+
+        Transform lastBlockTransform = lastBlock.transform;
         PlaneObject.SetActive(true);
 
-        PlaneObject.transform.SetParent(lastBlock, false);
-        Vector3 blockScale = lastBlock.localScale;
+        PlaneObject.transform.SetParent(lastBlockTransform, false);
+        Vector3 blockScale = lastBlockTransform.localScale;
         PlaneObject.transform.localScale = new(
             PlaneScale.x / blockScale.x,
             PlaneScale.y / blockScale.y,

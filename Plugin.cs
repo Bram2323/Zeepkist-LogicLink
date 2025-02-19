@@ -26,6 +26,7 @@ public class Plugin : BaseUnityPlugin
     public ConfigEntry<KeyCode> SelectTriggers;
     public ConfigEntry<KeyCode> SelectCombined;
     public ConfigEntry<KeyCode> ToggleTriggerPlane;
+    public ConfigEntry<bool> AlwaysShowPlane;
     public ConfigEntry<string> PlaneColor;
     public Color DefaultPlaneColor = new(1, 1, 1, 0.5f);
 
@@ -43,6 +44,7 @@ public class Plugin : BaseUnityPlugin
         SelectTriggers = Config.Bind("Move Mode", "Select Triggers", KeyCode.None, "Select the triggers from the current selection");
         SelectCombined = Config.Bind("Move Mode", "Select Combined", KeyCode.None, "Select both the heads and the triggers from the current selection");
         ToggleTriggerPlane = Config.Bind("Plane", "Toggle Plane", KeyCode.None, "Toggle a plane to visualize the available movement of a trigger");
+        AlwaysShowPlane = Config.Bind("Plane", "Always Show Plane", false, "Controls if the plane is shown on non logic blocks");
         PlaneColor = Config.Bind("Plane", "Plane Color", ColorUtility.ToHtmlStringRGBA(DefaultPlaneColor), "The color of the plane");
 
         PlaneColor.SettingChanged += PlaneColorChanged;
