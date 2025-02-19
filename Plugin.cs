@@ -11,7 +11,7 @@ using ZeepSDK.LevelEditor;
 
 namespace LogicLink;
 
-[BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
+[BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 [BepInDependency("ZeepSDK")]
 public class Plugin : BaseUnityPlugin
 {
@@ -35,7 +35,7 @@ public class Plugin : BaseUnityPlugin
         Instance = this;
         Logger = base.Logger;
 
-        harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
+        harmony = new Harmony(PluginInfo.PLUGIN_GUID);
         harmony.PatchAll();
 
         ChangeMoveMode = Config.Bind("Move Mode", "Change Move Mode", KeyCode.None, "Press to change the move mode");
@@ -51,7 +51,7 @@ public class Plugin : BaseUnityPlugin
         LevelEditorApi.ExitedLevelEditor += ExitedLevelEditor;
         LevelEditorApi.SelectionChanged += SelectionChanged;
 
-        Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
+        Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
     }
 
     private void Update()
