@@ -25,6 +25,8 @@ public class Plugin : BaseUnityPlugin
     public ConfigEntry<KeyCode> SelectHeads;
     public ConfigEntry<KeyCode> SelectTriggers;
     public ConfigEntry<KeyCode> SelectCombined;
+    public ConfigEntry<KeyCode> HideTriggers;
+    public ConfigEntry<KeyCode> ShowTriggers;
     public ConfigEntry<KeyCode> ToggleTriggerPlane;
     public ConfigEntry<bool> AlwaysShowPlane;
     public ConfigEntry<string> PlaneColor;
@@ -43,6 +45,10 @@ public class Plugin : BaseUnityPlugin
         SelectHeads = Config.Bind("Move Mode", "Select Heads", KeyCode.None, "Select the heads from the current selection");
         SelectTriggers = Config.Bind("Move Mode", "Select Triggers", KeyCode.None, "Select the triggers from the current selection");
         SelectCombined = Config.Bind("Move Mode", "Select Combined", KeyCode.None, "Select both the heads and the triggers from the current selection");
+
+        HideTriggers = Config.Bind("Selection", "Set Hide Triggers", KeyCode.None, "All selected logic blocks get set to hide triggers");
+        ShowTriggers = Config.Bind("Selection", "Set Show Triggers", KeyCode.None, "All selected logic blocks get set to show triggers");
+
         ToggleTriggerPlane = Config.Bind("Plane", "Toggle Plane", KeyCode.None, "Toggle a plane to visualize the available movement of a trigger");
         AlwaysShowPlane = Config.Bind("Plane", "Always Show Plane", false, "Controls if the plane is shown on non logic blocks");
         PlaneColor = Config.Bind("Plane", "Plane Color", ColorUtility.ToHtmlStringRGBA(DefaultPlaneColor), "The color of the plane");
@@ -62,6 +68,9 @@ public class Plugin : BaseUnityPlugin
         if (Input.GetKeyDown(SelectHeads.Value)) SelectionManager.Instance?.SelectHeads();
         if (Input.GetKeyDown(SelectTriggers.Value)) SelectionManager.Instance?.SelectTriggers();
         if (Input.GetKeyDown(SelectCombined.Value)) SelectionManager.Instance?.SelectCombined();
+
+        if (Input.GetKeyDown(HideTriggers.Value)) SelectionManager.Instance?.HideTriggers();
+        if (Input.GetKeyDown(ShowTriggers.Value)) SelectionManager.Instance?.ShowTriggers();
 
         if (Input.GetKeyDown(ToggleTriggerPlane.Value)) PlaneManager.Instance?.TogglePlane();
     }

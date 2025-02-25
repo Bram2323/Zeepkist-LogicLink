@@ -78,7 +78,11 @@ public class SelectionManager
 
     public void SelectHeads()
     {
-        if (Central.selection.list.Count == 0) return;
+        if (Central.selection.list.Count == 0)
+        {
+            MessengerApi.Log("No logic blocks selected!");
+            return;
+        }
 
         List<string> before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
 
@@ -102,11 +106,18 @@ public class SelectionManager
 
         UpdateGizmo();
         Central.selection.CalculateMiddlePivot(false);
+
+        if (SelectedLogicBlocks.Count == 0) MessengerApi.Log("No logic blocks selected!");
+        else MessengerApi.Log("All heads selected!");
     }
 
     public void SelectTriggers()
     {
-        if (Central.selection.list.Count == 0) return;
+        if (Central.selection.list.Count == 0)
+        {
+            MessengerApi.Log("No logic blocks selected!");
+            return;
+        }
 
         List<string> before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
 
@@ -130,11 +141,18 @@ public class SelectionManager
 
         UpdateGizmo();
         Central.selection.CalculateMiddlePivot(false);
+
+        if (SelectedLogicBlocks.Count == 0) MessengerApi.Log("No logic blocks selected!");
+        else MessengerApi.Log("All triggers selected!");
     }
 
     public void SelectCombined()
     {
-        if (Central.selection.list.Count == 0) return;
+        if (Central.selection.list.Count == 0)
+        {
+            MessengerApi.Log("No logic blocks selected!");
+            return;
+        }
 
         List<string> before = Central.undoRedo.ConvertSelectionToStringList(Central.selection.list);
 
@@ -158,6 +176,57 @@ public class SelectionManager
 
         UpdateGizmo();
         Central.selection.CalculateMiddlePivot(false);
+
+        if (SelectedLogicBlocks.Count == 0) MessengerApi.Log("No logic blocks selected!");
+        else MessengerApi.Log("Selected everything!");
+    }
+
+
+    public void HideTriggers()
+    {
+        SetTriggerVisibility(false, out bool didAnything);
+        if (didAnything) MessengerApi.Log("All triggers set to hidden!");
+        else MessengerApi.Log("No logic blocks selected!");
+    }
+
+    public void ShowTriggers()
+    {
+        SetTriggerVisibility(true, out bool didAnything);
+        if (didAnything) MessengerApi.Log("All triggers set to shown!");
+        else MessengerApi.Log("No logic blocks selected!");
+    }
+
+    public void SetTriggerVisibility(bool visible, out bool didAnything)
+    {
+        didAnything = false;
+        BlockProperties[] list = [.. Central.selection.list];
+
+        List<BlockEdit_LogicGate> logics = [];
+
+        foreach (BlockProperties block in list)
+        {
+            BlockEdit_LogicGate logicEdit = block.GetComponent<BlockEdit_LogicGate>();
+            if (logicEdit == null) continue;
+            logics.Add(logicEdit);
+        }
+
+        if (logics.Count == 0) return;
+
+        float invisibleFloatValue = visible ? 0f : 1f;
+        DontBreakLock = true;
+        for (int i = 0; i < logics.Count; i++)
+        {
+            BlockEdit_LogicGate logicEdit = logics[i];
+            if (i == logics.Count - 1) DontBreakLock = false;
+
+            LEV_InspectorBridge bridge = logicEdit.properties2.bridge;
+            bridge.SetFloatValue(logicEdit.NUMBER_invisibleTriggers, invisibleFloatValue);
+            logicEdit.LogicValueChanged();
+
+        }
+        DontBreakLock = false;
+
+        didAnything = true;
     }
 
 
