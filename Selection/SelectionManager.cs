@@ -207,25 +207,39 @@ public class SelectionManager
         List<string> beforeSelection = undoRedo.ConvertSelectionToStringList(list);
 
         List<BlockEdit_LogicGate> logics = [];
+        List<TrasherDisableGlow> trashers = [];
 
         foreach (BlockProperties block in list)
         {
-            BlockEdit_LogicGate logicEdit = block.GetComponent<BlockEdit_LogicGate>();
-            if (logicEdit == null) continue;
-            logics.Add(logicEdit);
+            if (block.TryGetComponent(out BlockEdit_LogicGate logicEdit))
+            {
+                logics.Add(logicEdit);
+            }
+            else
+            {
+                TrasherDisableGlow disableGlow = block.GetComponentInChildren<TrasherDisableGlow>();
+                if (disableGlow != null) trashers.Add(disableGlow);
+            }
         }
 
-        if (logics.Count == 0) return;
+        if (logics.Count == 0 && trashers.Count == 0) return;
 
         float invisibleFloatValue = visible ? 0f : 1f;
         DontBreakLock = true;
-        for (int i = 0; i < logics.Count; i++)
+        foreach (BlockEdit_LogicGate logicEdit in logics)
         {
-            BlockEdit_LogicGate logicEdit = logics[i];
-
             LEV_InspectorBridge bridge = logicEdit.properties2.bridge;
+            logicEdit.invisibleTriggers = !visible;
             bridge.SetFloatValue(logicEdit.NUMBER_invisibleTriggers, invisibleFloatValue);
             logicEdit.LogicValueChanged();
+        }
+        foreach (TrasherDisableGlow trasher in trashers)
+        {
+            BlockEdit_GenericToggle toggle = trasher.toggle;
+            LEV_InspectorBridge bridge = toggle.properties2.bridge;
+            toggle.genericToggle = !visible;
+            bridge.SetFloatValue(toggle.NUMBER_GenericToggle, invisibleFloatValue);
+            toggle.BoosterValueChanged();
         }
         DontBreakLock = false;
 
