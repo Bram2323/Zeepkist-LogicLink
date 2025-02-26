@@ -249,6 +249,9 @@ public class SelectionManager
         Change_Collection collection = undoRedo.ConvertBeforeAndAfterListToCollection(before, after, list, beforeSelection, afterSelection);
         Central.validation.BreakLock(collection, "LogicLink - SetTriggerVisibility");
 
+        Central.selection.DeselectAllBlocks(false, "LogicLink - SetTriggerVisibility");
+        undoRedo.Reselect(afterSelection);
+
         didAnything = true;
     }
 
