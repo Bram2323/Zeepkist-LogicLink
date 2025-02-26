@@ -199,7 +199,12 @@ public class SelectionManager
     public void SetTriggerVisibility(bool visible, out bool didAnything)
     {
         didAnything = false;
-        BlockProperties[] list = [.. Central.selection.list];
+        List<BlockProperties> list = Central.selection.list;
+        LEV_UndoRedo undoRedo = Central.undoRedo;
+        if (list.Count == 0) return;
+
+        List<string> before = undoRedo.ConvertBlockListToJSONList(list);
+        List<string> beforeSelection = undoRedo.ConvertSelectionToStringList(list);
 
         List<BlockEdit_LogicGate> logics = [];
 
@@ -217,14 +222,18 @@ public class SelectionManager
         for (int i = 0; i < logics.Count; i++)
         {
             BlockEdit_LogicGate logicEdit = logics[i];
-            if (i == logics.Count - 1) DontBreakLock = false;
 
             LEV_InspectorBridge bridge = logicEdit.properties2.bridge;
             bridge.SetFloatValue(logicEdit.NUMBER_invisibleTriggers, invisibleFloatValue);
             logicEdit.LogicValueChanged();
-
         }
         DontBreakLock = false;
+
+        List<string> after = undoRedo.ConvertBlockListToJSONList(list);
+        List<string> afterSelection = undoRedo.ConvertSelectionToStringList(list);
+
+        Change_Collection collection = undoRedo.ConvertBeforeAndAfterListToCollection(before, after, list, beforeSelection, afterSelection);
+        Central.validation.BreakLock(collection, "LogicLink - SetTriggerVisibility");
 
         didAnything = true;
     }
