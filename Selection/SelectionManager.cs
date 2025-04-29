@@ -38,6 +38,7 @@ public class SelectionManager
     public SelectionManager(LEV_LevelEditorCentral central)
     {
         Central = central;
+        Plugin.Logger.LogInfo("SelectionManager created!");
     }
 
 

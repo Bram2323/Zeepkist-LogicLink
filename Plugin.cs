@@ -77,6 +77,7 @@ public class Plugin : BaseUnityPlugin
 
     private void EnteredLevelEditor()
     {
+        Logger.LogInfo("Entering level editor!");
         LEV_LevelEditorCentral central = FindObjectsOfType<LEV_LevelEditorCentral>()[0];
         SelectionManager.Instance = new(central);
         PlaneManager.Instance = new(central.selection, ParsePlaneColor());
@@ -84,6 +85,7 @@ public class Plugin : BaseUnityPlugin
 
     private void ExitedLevelEditor()
     {
+        Logger.LogInfo("Exiting level editor!");
         SelectionManager.Instance = null;
         PlaneManager.Instance = null;
     }

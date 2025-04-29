@@ -23,6 +23,7 @@ public class PlaneManager
     {
         Selection = selection;
         PlaneColor = color;
+        Plugin.Logger.LogInfo("PlaneManager created!");
     }
 
     public void TogglePlane()
