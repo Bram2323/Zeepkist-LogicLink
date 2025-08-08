@@ -38,6 +38,7 @@ public class SelectionManager
     public SelectionManager(LEV_LevelEditorCentral central)
     {
         Central = central;
+        Plugin.Logger.LogInfo("SelectionManager created!");
     }
 
 
@@ -250,7 +251,7 @@ public class SelectionManager
         Central.validation.BreakLock(collection, "LogicLink - SetTriggerVisibility");
 
         Central.selection.DeselectAllBlocks(false, "LogicLink - SetTriggerVisibility");
-        undoRedo.Reselect(afterSelection);
+        undoRedo.Reselect(collection, false);
 
         didAnything = true;
     }

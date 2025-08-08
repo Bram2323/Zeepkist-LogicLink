@@ -44,8 +44,12 @@ public class LEV_UndoRedo_ConvertSelectionToStringList
 [HarmonyPatch(typeof(LEV_UndoRedo), "Reselect")]
 public class LEV_UndoRedo_Reselect
 {
-    public static void Prefix(List<string> uidList)
+    public static void Prefix(Change_Collection changeCollection, bool before)
     {
+        List<string> uidList;
+        if (before) uidList = changeCollection.beforeSelectionUIDs;
+        else uidList = changeCollection.afterSelectionUIDs;
+
         foreach (string uidFull in uidList)
         {
             if (!uidFull.StartsWith("LogicLink")) continue;
