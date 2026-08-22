@@ -1,6 +1,6 @@
 using System;
 
-namespace LogicLink.Selection;
+namespace LogicLink.LogicV1.Selection;
 
 public class SelectedParts
 {

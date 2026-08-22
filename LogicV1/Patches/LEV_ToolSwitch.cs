@@ -1,16 +1,15 @@
 using HarmonyLib;
-using LogicLink.Plane;
-using LogicLink.Selection;
+using LogicLink.LogicV1.Selection;
 using System.Collections.Generic;
 
-namespace LogicLink.Patches;
+namespace LogicLink.LogicV1.Patches;
 
 [HarmonyPatch(typeof(LEV_ToolSwitch), "DisableAllTools")]
 public class LEV_ToolSwitch_DisableAllTools
 {
     public static void Prefix()
     {
-        SelectionManager selectionManager = SelectionManager.Instance;
+        OldSelectionManager selectionManager = OldSelectionManager.Instance;
         if (selectionManager == null) return;
 
         selectionManager.IsGrabbingOrDragging = false;

@@ -1,18 +1,17 @@
-using LogicLink;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using ZeepSDK.Messaging;
 
-namespace LogicLink.Selection;
+namespace LogicLink.LogicV1.Selection;
 
-public class SelectionManager
+public class OldSelectionManager
 {
     public static readonly Color DeselectedColor = Color.HSVToRGB(0f, 0f, -0.5f);
     public const float LooseRotationDeadZone = 0.1f;
 
-    public static SelectionManager Instance;
+    public static OldSelectionManager Instance;
     public static MoveMode MoveMode = MoveMode.Combined;
 
 
@@ -35,7 +34,7 @@ public class SelectionManager
 
 
 
-    public SelectionManager(LEV_LevelEditorCentral central)
+    public OldSelectionManager(LEV_LevelEditorCentral central)
     {
         Central = central;
         Plugin.Logger.LogInfo("SelectionManager created!");
@@ -400,8 +399,6 @@ public class SelectionManager
 
         Central.selection.AddThisBlock(block);
         UpdateGizmo();
-
-        Plugin.Logger.LogMessage("Selected block!");
     }
 
     public void DeselectBlock(BlockProperties block)
@@ -421,8 +418,6 @@ public class SelectionManager
         }
 
         UpdateGizmo();
-
-        Plugin.Logger.LogMessage("Deselected block!");
     }
 
 
@@ -685,7 +680,7 @@ public class SelectionManager
 
         SelectedParts selectedParts = SelectedLogicBlocks[uid];
         if (selectedParts.AllSelected ||
-            (MoveMode == MoveMode.LooseRotation && selectedParts.Head && selectedParts.AnyTrigger))
+            MoveMode == MoveMode.LooseRotation && selectedParts.Head && selectedParts.AnyTrigger)
         {
             transform.Translate(ogTranslation, Space.World);
             return;
@@ -712,7 +707,7 @@ public class SelectionManager
             height2 -= translation.y;
         }
 
-        if (MoveMode == MoveMode.LoosePosition || (MoveMode == MoveMode.LooseRotation && selectedParts.Head))
+        if (MoveMode == MoveMode.LoosePosition || MoveMode == MoveMode.LooseRotation && selectedParts.Head)
         {
             Vector3 looseTranslation = localTranslation;
             looseTranslation.y = 0;
@@ -720,12 +715,12 @@ public class SelectionManager
             transform.Translate(looseTranslation, Space.Self);
         }
 
-        if (selectedParts.Trigger1 || (MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger))
+        if (selectedParts.Trigger1 || MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger)
         {
             distance1 += translation.z;
             height1 += translation.y;
         }
-        if (selectedParts.Trigger2 || (MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger))
+        if (selectedParts.Trigger2 || MoveMode == MoveMode.LooseRotation && selectedParts.AnyTrigger)
         {
             distance2 += translation.z;
             height2 += translation.y;
@@ -782,7 +777,6 @@ public class SelectionManager
 
     public void OnDeselectEverything()
     {
-        Plugin.Logger.LogMessage("Deselected everything!");
         SelectedLogicBlocks.Clear();
     }
 }

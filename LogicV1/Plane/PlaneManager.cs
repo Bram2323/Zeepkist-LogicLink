@@ -1,7 +1,8 @@
+using LogicLink.LogicV1;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace LogicLink.Plane;
+namespace LogicLink.LogicV1.Plane;
 
 public class PlaneManager
 {
@@ -62,7 +63,7 @@ public class PlaneManager
         }
 
         BlockProperties lastBlock = list[^1];
-        if (!Plugin.Instance.AlwaysShowPlane.Value && !lastBlock.TryGetComponent(out BlockEdit_LogicGate _))
+        if (!OldLogicPlugin.Instance.AlwaysShowPlane.Value && !lastBlock.TryGetComponent(out BlockEdit_LogicGate _))
         {
             PlaneObject.SetActive(false);
             return;

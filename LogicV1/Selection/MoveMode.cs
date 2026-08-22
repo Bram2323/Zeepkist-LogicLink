@@ -1,4 +1,4 @@
-﻿namespace LogicLink.Selection;
+﻿namespace LogicLink.LogicV1.Selection;
 
 public enum MoveMode
 {

@@ -1,8 +1,8 @@
 using HarmonyLib;
-using LogicLink.Selection;
+using LogicLink.LogicV1.Selection;
 using System.Collections.Generic;
 
-namespace LogicLink.Patches;
+namespace LogicLink.LogicV1.Patches;
 
 [HarmonyPatch(typeof(LEV_UndoRedo), "ConvertSelectionToStringList")]
 public class LEV_UndoRedo_ConvertSelectionToStringList
@@ -11,11 +11,11 @@ public class LEV_UndoRedo_ConvertSelectionToStringList
 
     public static bool Prefix(ref List<string> __result, List<BlockProperties> selection)
     {
-        if (SelectionManager.Instance.SelectedLogicBlocks.Count == 0) return true;
+        if (OldSelectionManager.Instance.SelectedLogicBlocks.Count == 0) return true;
 
         List<string> uids = [];
 
-        Dictionary<string, SelectedParts> selectedLogicBlocks = SelectionManager.Instance.SelectedLogicBlocks;
+        Dictionary<string, SelectedParts> selectedLogicBlocks = OldSelectionManager.Instance.SelectedLogicBlocks;
         for (int i = 0; i < selection.Count; i++)
         {
             string uid = selection[i].UID;
@@ -36,7 +36,7 @@ public class LEV_UndoRedo_ConvertSelectionToStringList
     {
         if (!FromDeselectAll) return;
 
-        SelectionManager.Instance.OnDeselectEverything();
+        OldSelectionManager.Instance.OnDeselectEverything();
         FromDeselectAll = false;
     }
 }
@@ -65,12 +65,12 @@ public class LEV_UndoRedo_Reselect
                 uid += parts[i];
             }
 
-            SelectionManager.Instance.SelectedLogicBlocks[uid] = selectedParts;
+            OldSelectionManager.Instance.SelectedLogicBlocks[uid] = selectedParts;
         }
     }
 
     public static void Postfix()
     {
-        SelectionManager.Instance.PaintAllBlocks();
+        OldSelectionManager.Instance.PaintAllBlocks();
     }
 }

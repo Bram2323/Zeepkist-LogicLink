@@ -1,9 +1,9 @@
 using HarmonyLib;
-using LogicLink.Selection;
+using LogicLink.LogicV1.Selection;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace LogicLink.Patches;
+namespace LogicLink.LogicV1.Patches;
 
 [HarmonyPatch(typeof(LEV_Selection), "ClickBuilding")]
 public class LEV_Selection_ClickBuilding
@@ -28,7 +28,7 @@ public class LEV_Selection_ClickBuilding
             if (logicEdit == null) return true;
 
             List<string> selectionUIDs_before = __instance.central.undoRedo.ConvertSelectionToStringList(__instance.central.selection.list);
-            SelectionManager.Instance.ClickedOnPart(hit);
+            OldSelectionManager.Instance.ClickedOnPart(hit);
             List<string> selectionUIDs_after = __instance.central.undoRedo.ConvertSelectionToStringList(__instance.central.selection.list);
             __instance.RegisterManualSelectionBreakLock(selectionUIDs_before, selectionUIDs_after);
 
@@ -44,9 +44,9 @@ public class LEV_Selection_TranslatePositions
 {
     private static bool Prefix(LEV_Selection __instance, Vector3 translation)
     {
-        if (SelectionManager.MoveMode == MoveMode.Combined) return true;
+        if (OldSelectionManager.MoveMode == MoveMode.Combined) return true;
 
-        SelectionManager selectionManager = SelectionManager.Instance;
+        OldSelectionManager selectionManager = OldSelectionManager.Instance;
         List<BlockProperties> list = __instance.list;
         for (int i = 0; i < list.Count; i++)
         {
@@ -61,7 +61,7 @@ public class LEV_Selection_CalculateMiddlePivot
 {
     private static bool Prefix(bool forceDefault)
     {
-        SelectionManager.Instance.CalculateMiddlePivot(forceDefault);
+        OldSelectionManager.Instance.CalculateMiddlePivot(forceDefault);
         return false;
     }
 }
@@ -71,7 +71,7 @@ public class LEV_Selection_AddThisBlock
 {
     private static void Postfix(BlockProperties block)
     {
-        SelectionManager.Instance.PaintBlock(block);
+        OldSelectionManager.Instance.PaintBlock(block);
     }
 }
 

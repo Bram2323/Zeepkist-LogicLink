@@ -1,14 +1,14 @@
 using HarmonyLib;
-using LogicLink.Selection;
+using LogicLink.LogicV1.Selection;
 
-namespace LogicLink.Patches;
+namespace LogicLink.LogicV1.Patches;
 
 [HarmonyPatch(typeof(BlockEdit), "PropertyBreakLock")]
 public class BlockEdit_PropertyBreakLock
 {
     private static bool Prefix()
     {
-        if (SelectionManager.Instance != null && SelectionManager.Instance.DontBreakLock) return false;
+        if (OldSelectionManager.Instance != null && OldSelectionManager.Instance.DontBreakLock) return false;
         return true;
     }
 }

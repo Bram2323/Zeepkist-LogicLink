@@ -1,9 +1,9 @@
 using HarmonyLib;
-using LogicLink.Plane;
-using LogicLink.Selection;
+using LogicLink.LogicV1.Plane;
+using LogicLink.LogicV1.Selection;
 using System.Collections.Generic;
 
-namespace LogicLink.Patches;
+namespace LogicLink.LogicV1.Patches;
 
 [HarmonyPatch(typeof(LEV_GizmoHandler), "DuplicateSelectedObjects")]
 public class LEV_GizmoHandler_DuplicateSelectedObjects
@@ -19,7 +19,7 @@ public class LEV_GizmoHandler_GoIntoGMode
 {
     public static void Prefix()
     {
-        SelectionManager selectionManager = SelectionManager.Instance;
+        OldSelectionManager selectionManager = OldSelectionManager.Instance;
         if (selectionManager == null) return;
 
         selectionManager.IsGrabbingOrDragging = true;
@@ -31,7 +31,7 @@ public class LEV_GizmoHandler_GoOutOfGMode
 {
     public static void Prefix()
     {
-        SelectionManager selectionManager = SelectionManager.Instance;
+        OldSelectionManager selectionManager = OldSelectionManager.Instance;
         if (selectionManager == null) return;
 
         selectionManager.IsGrabbingOrDragging = false;
@@ -43,7 +43,7 @@ public class LEV_GizmoHandler_GizmoJustGotClicked
 {
     public static void Prefix()
     {
-        SelectionManager selectionManager = SelectionManager.Instance;
+        OldSelectionManager selectionManager = OldSelectionManager.Instance;
         if (selectionManager == null) return;
 
         selectionManager.IsGrabbingOrDragging = true;
@@ -55,7 +55,7 @@ public class LEV_GizmoHandler_GizmoJustGotReleased
 {
     public static void Prefix()
     {
-        SelectionManager selectionManager = SelectionManager.Instance;
+        OldSelectionManager selectionManager = OldSelectionManager.Instance;
         if (selectionManager == null) return;
 
         selectionManager.IsGrabbingOrDragging = false;

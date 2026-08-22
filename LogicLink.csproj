@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
@@ -19,15 +19,23 @@
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
-    <PackageReference Include="Zeepkist.GameLibs" Version="17.15.1867" />
-    <PackageReference Include="ZeepSDK" Version="1.*" />
+    <PackageReference Include="MediaToolkit" Version="1.1.0.1" />
+    <PackageReference Include="Zeepkist.GameLibs" Version="18.0.2043" />
+    <PackageReference Include="ZeepSDK" Version="2.6.3" />
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
   
+  <ItemGroup>
+    <Reference Include="Toolkist">
+      <HintPath>D:\SteamLibrary\steamapps\common\Zeepkist\BepInEx\plugins\Mods\6315836_8107762\Toolkist.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="if exist &quot;C:\Program Files (x86)\Steam\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins\&quot; copy /y &quot;$(OutDir)/LogicLink.dll&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins&quot; &#xD;&#xA;if exist &quot;D:\SteamLibrary\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins\&quot; copy /y &quot;$(OutDir)/LogicLink.dll&quot; &quot;D:\SteamLibrary\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins&quot;" />
+	<Exec Command="if exist &quot;C:\Program Files (x86)\Steam\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins\&quot; copy /y &quot;$(OutDir)/MediaToolkit.dll&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins&quot; &#xD;&#xA;if exist &quot;D:\SteamLibrary\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins\&quot; copy /y &quot;$(OutDir)/MediaToolkit.dll&quot; &quot;D:\SteamLibrary\steamapps\common\Zeepkist\BepInEx\plugins\Sideloaded\Plugins&quot;" />
   </Target>
 </Project>
