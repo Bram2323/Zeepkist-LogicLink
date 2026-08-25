@@ -2,6 +2,7 @@
 using Imui.Core;
 using LogicLink.Generator;
 using LogicLink.Generator.Generators.VideoToSigns;
+using LogicLink.LogicV2.Patches;
 using LogicLink.Settings;
 using System;
 using System.Collections.Generic;
@@ -177,7 +178,8 @@ namespace LogicLink.LogicV2
                 if (gui.Button("Paste"))
                 {
                     _windowOpen = false;
-                    Blocks.ToBlueprint("VideoConverter").PasteIntoEditor(Plugin.Central, false);
+                    LogicScript_Door_VisualizeToggler.ShouldSkip = true;
+                    Blocks.ToBlueprint("VideoConverter").PasteIntoEditor(Plugin.Central, true);
                     Blocks.Clear();
                     ConvertingVideoState = ConvertingStage.NoFile;
                 }

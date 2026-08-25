@@ -67,10 +67,10 @@ namespace LogicLink.LogicV2
 
 
 
-        private static List<BlockEdit_v18_C_Logic_Base> GetLogicBlocks(List<BlockProperties> selection)
+        public static List<BlockEdit_v18_C_Logic_Base> GetLogicBlocks(List<BlockProperties> blocks)
         {
             List<BlockEdit_v18_C_Logic_Base> logicBlocks = [];
-            foreach (BlockProperties block in selection)
+            foreach (BlockProperties block in blocks)
             {
                 BlockEdit_v18_C_Logic_Base logicEdit = block.GetComponentInChildren<BlockEdit_v18_C_Logic_Base>();
                 if (logicEdit)
@@ -79,6 +79,20 @@ namespace LogicLink.LogicV2
                 }
             }
             return logicBlocks;
+        }
+
+        public static List<BlockEdit_v18_Connector_Base> GetConnectorBlocks(List<BlockProperties> blocks)
+        {
+            List<BlockEdit_v18_Connector_Base> connectorBlocks = [];
+            foreach (BlockProperties block in blocks)
+            {
+                BlockEdit_v18_Connector_Base logicEdit = block.GetComponentInChildren<BlockEdit_v18_Connector_Base>();
+                if (logicEdit)
+                {
+                    connectorBlocks.Add(logicEdit);
+                }
+            }
+            return connectorBlocks;
         }
 
         private static UndoRedoInfo CreateUndoRedoInfo()
