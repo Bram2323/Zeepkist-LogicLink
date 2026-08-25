@@ -4,11 +4,13 @@ using HarmonyLib;
 using LogicLink.Generator.Generators.VideoToSigns;
 using LogicLink.LogicV1;
 using LogicLink.LogicV2;
+using LogicLink.LogicV2.Patches;
 using LogicLink.Settings;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ZeepSDK.LevelEditor;
+using ZeepSDK.Messaging;
 using ZeepSDK.Settings;
 using ZeepSDK.UI;
 
@@ -40,6 +42,9 @@ public class Plugin : BaseUnityPlugin
 
     private Setting<KeyCode> VideoGenerator = new("Generators", "Open Video Generator", KeyCode.None, "Opens the Video Generator");
 
+    private Setting<KeyCode> ToggleTogglerVisualizer = new("Visuals", "Toggle Toggler Vizualizers", KeyCode.None, "Toggles wether or not the visualizer lines for togglers spawn");
+    private Setting<KeyCode> ToggleConnectionVisibility = new("Visuals", "Toggle Connection Vizibility", KeyCode.None, "Toggles the connection visibility");
+
 
     public void Awake()
     {
@@ -60,6 +65,11 @@ public class Plugin : BaseUnityPlugin
         PluginLoaded = true;
         SettingsManager.HandleBacklog();
 
+        SettingsApi.ConfigureModSettingsTabs(this, (tabs) =>
+        {
+            tabs.Tab("LogicV2", "Generators");
+        });
+
         Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
     }
 
@@ -67,23 +77,30 @@ public class Plugin : BaseUnityPlugin
     {
         MainThreadScheduler.Update();
 
-        if (OpenRomGenerator.KeyDown() && !LevelEditorApi.IsKeyboardInputBlocked)
+        if (LevelEditorApi.IsInLevelEditor && !LevelEditorApi.IsKeyboardInputBlocked)
         {
-            if (RomGeneratorDrawer.CanOpen()) RomGeneratorDrawer.Open();
-            else if (RomGeneratorDrawer.IsOpen()) RomGeneratorDrawer.Close();
-        }
+            if (OpenRomGenerator.KeyDown())
+            {
+                if (RomGeneratorDrawer.CanOpen()) RomGeneratorDrawer.Open();
+                else if (RomGeneratorDrawer.IsOpen()) RomGeneratorDrawer.Close();
+            }
 
-        if (VideoGenerator.KeyDown() && !LevelEditorApi.IsKeyboardInputBlocked)
-        {
-            if (VideoGeneratorDrawer.CanOpen()) VideoGeneratorDrawer.Open();
-            else if (VideoGeneratorDrawer.IsOpen()) VideoGeneratorDrawer.Close();
-        }
+            if (VideoGenerator.KeyDown())
+            {
+                if (VideoGeneratorDrawer.CanOpen()) VideoGeneratorDrawer.Open();
+                else if (VideoGeneratorDrawer.IsOpen()) VideoGeneratorDrawer.Close();
+            }
 
-        if (SelectionOpperations.CanOpperateOnSelection() && !LevelEditorApi.IsKeyboardInputBlocked)
-        {
-            if (CreateTogglers.KeyDown()) SelectionOpperations.CreateTogglers();
-            if (HideLogic.KeyDown()) SelectionOpperations.SetLogicVisibility(false);
-            if (ShowLogic.KeyDown()) SelectionOpperations.SetLogicVisibility(true);
+            if (SelectionOpperations.CanOpperateOnSelection())
+            {
+                if (CreateTogglers.KeyDown()) SelectionOpperations.CreateTogglers();
+                if (HideLogic.KeyDown()) SelectionOpperations.SetLogicVisibility(false);
+                if (ShowLogic.KeyDown()) SelectionOpperations.SetLogicVisibility(true);
+            }
+
+            if (ToggleTogglerVisualizer.KeyDown()) LogicScript_Door_VisualizeToggler.ShouldSkip = !LogicScript_Door_VisualizeToggler.ShouldSkip;
+
+            if (ToggleConnectionVisibility.KeyDown()) ConnectionVisibility.SwitchType();
         }
 
         OldLogicPlugin.Update();
