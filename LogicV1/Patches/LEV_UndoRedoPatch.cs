@@ -7,6 +7,8 @@ namespace LogicLink.LogicV1.Patches;
 [HarmonyPatch(typeof(LEV_UndoRedo), "ConvertSelectionToStringList")]
 public class LEV_UndoRedo_ConvertSelectionToStringList
 {
+    public const string UidPrefix = "OldLogicLink";
+
     public static bool FromDeselectAll = false;
 
     public static bool Prefix(ref List<string> __result, List<BlockProperties> selection)
@@ -25,7 +27,7 @@ public class LEV_UndoRedo_ConvertSelectionToStringList
 
             string selectedPartsString = selectedParts.ToUidString();
 
-            uids.Add($"LogicLink_{selectedPartsString}_{uid}");
+            uids.Add($"{UidPrefix}_{selectedPartsString}_{uid}");
         }
 
         __result = uids;
@@ -52,7 +54,7 @@ public class LEV_UndoRedo_Reselect
 
         foreach (string uidFull in uidList)
         {
-            if (!uidFull.StartsWith("LogicLink")) continue;
+            if (!uidFull.StartsWith(LEV_UndoRedo_ConvertSelectionToStringList.UidPrefix)) continue;
 
             string[] parts = uidFull.Split('_');
 

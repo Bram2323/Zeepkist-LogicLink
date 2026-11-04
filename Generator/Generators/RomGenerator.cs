@@ -47,7 +47,7 @@ namespace LogicLink.Generator.Generators
 
                 lastSegmentInput = segmentInput;
                 lastSegmentOutput = segmentOutput;
-                currentOffset += Vector3.left * 16;
+                currentOffset += Vector3.left * 4;
             }
 
             return blocks;

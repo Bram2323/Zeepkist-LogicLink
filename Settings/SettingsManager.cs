@@ -56,9 +56,6 @@ namespace LogicLink.Settings
 
         public static void ConfigureTabs()
         {
-            // Disabled until ConfigureModSettingsTabs is fixed
-            return;
-
             Dictionary<string, List<string>> tabContents = [];
             SettingsApi.ClearModSettingsTabs(Plugin.Instance);
 

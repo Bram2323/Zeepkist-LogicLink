@@ -7,19 +7,21 @@ using LogicLink.Settings;
 using System.Collections.Generic;
 using System.IO;
 using Toolkist;
-using Toolkist.EditorOperations;
 using UnityEngine;
 using ZeepSDK.LevelEditor;
 using ZeepSDK.UI;
 
-namespace LogicLink.LogicV2
+namespace LogicLink.LogicV2.Drawers
 {
-    public class RomGeneratorDrawer : IZeepGUIDrawer
+    public class RomGeneratorDrawer : Drawer
     {
-        private bool _windowOpen = false;
+        public override int Height => 700;
+        public override int Width => 500;
+        public override string Title => "Rom Generator";
 
         private Setting<string> PathSetting = new("Generators", "RomFilePath", "", "The file that the Rom Generator will use", hidden: true);
         private Setting<string> SeperatorSetting = new("Generators", "RomSeperator", ",", "What the Rom Generator will use to seperate the numbers", hidden: true);
+
         private string ReadErrorMessage = "";
         private string ConvertWarningMessage = "";
         private string ConvertMessage = "";
@@ -29,39 +31,11 @@ namespace LogicLink.LogicV2
         private long[] Numbers;
 
 
-        public void Open()
+        public override void DrawGUI(ImGui gui)
         {
-            if (!CanOpen()) return;
-            _windowOpen = true;
-        }
-
-        public void Close()
-        {
-            _windowOpen = false;
-        }
-
-        public bool CanOpen()
-        {
-            return !_windowOpen && Plugin.Central != null && LevelEditorApi.IsInLevelEditor;
-        }
-
-        public bool IsOpen()
-        {
-            return _windowOpen;
-        }
-
-        public void OnZeepGUI(ImGui gui)
-        {
-            int width = 700;
-            int height = 500;
-            if (!_windowOpen || !gui.BeginWindow("Rom Generator", ref _windowOpen, (width, height))) return;
-
             DrawFileSelection(gui);
             DrawNumberEditor(gui);
-
-            gui.EndWindow();
         }
-
 
 
         private void DrawFileSelection(ImGui gui)
@@ -71,7 +45,8 @@ namespace LogicLink.LogicV2
             gui.Text("Seperator:", new ImTextSettings(16));
             SeperatorSetting.Value = gui.TextEdit(SeperatorSetting);
             gui.TooltipAtLastControl("Fill in what seperates the numbers (new lines get seperated automatically)");
-            if (gui.Button("Open File", (150, 30)))
+
+            if (gui.FitButton("Open File"))
             {
                 Plugin.Logger.LogInfo($"Rom Generator - Opening '{PathSetting}'");
                 ClearWarnings();
@@ -87,12 +62,12 @@ namespace LogicLink.LogicV2
         {
             if (!LoadedFile) return;
 
-            using (gui.Vertical(0, 30)) { }
+            gui.AddSpacing(30);
 
             gui.Text($"Current file: '{FileName}'");
             gui.Text($"{Numbers.Length} {Numbers.Length.Pluralise("number", "s")}");
 
-            using (gui.Vertical(0, 30)) { }
+            gui.AddSpacing(30);
 
             if (gui.Button("Generate Rom", (200, 30)))
             {
@@ -115,8 +90,6 @@ namespace LogicLink.LogicV2
             ReadErrorMessage = "";
             ConvertWarningMessage = "";
             ConvertMessage = "";
-
-            GeneratorBlock genBlock = new();
         }
 
         private bool OpenFile(string path)

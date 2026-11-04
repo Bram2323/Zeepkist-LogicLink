@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace LogicLink.Generator.Generators.VideoToSigns
 {
+    // Copied this from somewhere on the internet
     public class TextureScale
     {
         public class ThreadData
@@ -25,17 +26,17 @@ namespace LogicLink.Generator.Generators.VideoToSigns
         private static int finishCount;
         private static Mutex mutex;
 
-        public static void Point(Texture2D tex, int newWidth, int newHeight)
+        public static Color[] Point(Texture2D tex, int newWidth, int newHeight)
         {
-            ThreadedScale(tex, newWidth, newHeight, false);
+            return ThreadedScale(tex, newWidth, newHeight, false);
         }
 
-        public static void Bilinear(Texture2D tex, int newWidth, int newHeight)
+        public static Color[] Bilinear(Texture2D tex, int newWidth, int newHeight)
         {
-            ThreadedScale(tex, newWidth, newHeight, true);
+            return ThreadedScale(tex, newWidth, newHeight, true);
         }
 
-        private static void ThreadedScale(Texture2D tex, int newWidth, int newHeight, bool useBilinear)
+        private static Color[] ThreadedScale(Texture2D tex, int newWidth, int newHeight, bool useBilinear)
         {
             texColors = tex.GetPixels();
             newColors = new Color[newWidth * newHeight];
@@ -97,15 +98,15 @@ namespace LogicLink.Generator.Generators.VideoToSigns
                 }
             }
 
-            tex.Reinitialize(newWidth, newHeight);
-            tex.SetPixels(newColors);
-            tex.Apply();
+            Color[] colors = newColors;
 
             texColors = null;
             newColors = null;
+
+            return colors;
         }
 
-        public static void BilinearScale(object obj)
+        private static void BilinearScale(object obj)
         {
             ThreadData threadData = (ThreadData)obj;
             for (int y = threadData.start; y < threadData.end; y++)
@@ -130,7 +131,7 @@ namespace LogicLink.Generator.Generators.VideoToSigns
             mutex.ReleaseMutex();
         }
 
-        public static void PointScale(object obj)
+        private static void PointScale(object obj)
         {
             ThreadData threadData = (ThreadData)obj;
             for (int y = threadData.start; y < threadData.end; y++)

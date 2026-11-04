@@ -80,8 +80,8 @@ namespace LogicLink.Generator.Generators.VideoToSigns
                     ConversionOptions options = new() { Seek = currentTime };
                     MediaFile output = new() { Filename = OutputFile };
                     engine.GetThumbnail(video, output, options);
-                    Texture2D texture = MainThreadScheduler.RunFunc(() => GetTextureForCurrentFrame(width));
-                    string[] text = GetTextForFrame(texture);
+                    Color[] colors = GetColorsForCurrentFrame(width, out int newWidth, out int newHeight);
+                    string[] text = GetTextForFrame(colors, newWidth, newHeight);
                     frames.Add(text);
                     currentTime += TimeSpan.FromSeconds(timePerFrames);
 
@@ -100,20 +100,24 @@ namespace LogicLink.Generator.Generators.VideoToSigns
             return frames;
         }
 
-        private static Texture2D GetTextureForCurrentFrame(int width)
+        private static Color[] GetColorsForCurrentFrame(int width, out int newWidth, out int newHeight)
         {
             byte[] data = File.ReadAllBytes(OutputFile);
-            Texture2D texture = new(2, 2);
-            texture.LoadImage(data);
+            Texture2D texture = MainThreadScheduler.RunFunc(() => new Texture2D(2, 2));
+            MainThreadScheduler.RunAction(() => texture.LoadImage(data));
 
-            if (width > texture.width) return texture;
+            if (width > texture.width)
+            {
+                newWidth = texture.width;
+                newHeight = texture.height;
+                return texture.GetPixels();
+            }
 
             float ratio = (float)width / texture.width;
-            int height = Mathf.RoundToInt(texture.height * ratio);
+            newWidth = width;
+            newHeight = Mathf.RoundToInt(texture.height * ratio);
 
-            TextureScale.Bilinear(texture, width, height);
-
-            return texture;
+            return TextureScale.Bilinear(texture, newWidth, newHeight);
         }
 
         private static List<Block> GetBlocksForFrame(string[] frame, Vector3 offset = new())
@@ -134,32 +138,32 @@ namespace LogicLink.Generator.Generators.VideoToSigns
             return blocks;
         }
 
-        private static string[] GetTextForFrame(Texture2D texture)
+        private static string[] GetTextForFrame(Color[] colors, int width, int height)
         {
-            int signs = (texture.width - 1) / signWidth + 1;
+            int signs = (width - 1) / signWidth + 1;
 
             string[] text = new string[signs];
             string[] lastColor = new string[signs];
             for (int i = 0; i < text.Length; i++) text[i] = signPrefix;
 
-            for (int y = texture.height - 1; y >= 0; y--)
+            for (int y = height - 1; y >= 0; y--)
             {
-                for (int x = 0; x < texture.width; x++)
+                for (int x = 0; x < width; x++)
                 {
                     int sign = x / signWidth;
 
-                    Color32 color = texture.GetPixel(x, y);
+                    Color32 color = colors[y * width + x];
                     string hex = ColorToHex(color);
                     if (lastColor[sign] != hex) text[sign] += hex;
                     text[sign] += signPixel;
                     lastColor[sign] = hex;
 
-                    if (x == texture.width - 1 && texture.width % signWidth != 0)
+                    if (x == width - 1 && width % signWidth != 0)
                     {
                         text[sign] += transparentColor;
                         lastColor[sign] = transparentColor;
 
-                        for (int i = 0; i < signWidth - texture.width % signWidth; i++)
+                        for (int i = 0; i < signWidth - width % signWidth; i++)
                         {
                             text[sign] += signPixel;
                         }

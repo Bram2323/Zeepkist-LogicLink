@@ -72,10 +72,13 @@ namespace LogicLink.LogicV2
             List<BlockEdit_v18_C_Logic_Base> logicBlocks = [];
             foreach (BlockProperties block in blocks)
             {
-                BlockEdit_v18_C_Logic_Base logicEdit = block.GetComponentInChildren<BlockEdit_v18_C_Logic_Base>();
-                if (logicEdit)
+                foreach (BlockEdit blockEdit in block.propertyScripts)
                 {
-                    logicBlocks.Add(logicEdit);
+                    if (blockEdit is BlockEdit_v18_C_Logic_Base logicEdit)
+                    {
+                        logicBlocks.Add(logicEdit);
+                        break;
+                    }
                 }
             }
             return logicBlocks;
@@ -86,10 +89,13 @@ namespace LogicLink.LogicV2
             List<BlockEdit_v18_Connector_Base> connectorBlocks = [];
             foreach (BlockProperties block in blocks)
             {
-                BlockEdit_v18_Connector_Base logicEdit = block.GetComponentInChildren<BlockEdit_v18_Connector_Base>();
-                if (logicEdit)
+                foreach (BlockEdit blockEdit in block.propertyScripts)
                 {
-                    connectorBlocks.Add(logicEdit);
+                    if (blockEdit is BlockEdit_v18_Connector_Base connectorEdit)
+                    {
+                        connectorBlocks.Add(connectorEdit);
+                        break;
+                    }
                 }
             }
             return connectorBlocks;

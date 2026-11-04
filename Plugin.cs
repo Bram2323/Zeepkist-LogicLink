@@ -4,6 +4,7 @@ using HarmonyLib;
 using LogicLink.Generator.Generators.VideoToSigns;
 using LogicLink.LogicV1;
 using LogicLink.LogicV2;
+using LogicLink.LogicV2.Drawers;
 using LogicLink.LogicV2.Patches;
 using LogicLink.Settings;
 using System;
@@ -31,19 +32,25 @@ public class Plugin : BaseUnityPlugin
 
     private Harmony harmony;
 
+    private GeneratorsDrawer GeneratorsDrawer = new();
     private RomGeneratorDrawer RomGeneratorDrawer = new();
     private VideoGeneratorDrawer VideoGeneratorDrawer = new();
+    private MusicGeneratorDrawer MusicGeneratorDrawer = new();
+
+    private Setting<KeyCode> OpenGenerators = new("Generators", "Open Generator Screen", KeyCode.None, "Open the generator select screen");
 
     private Setting<KeyCode> OpenRomGenerator = new("Generators", "Open Rom Generator", KeyCode.None, "Open the Rom Generator");
+    private Setting<KeyCode> OpenVideoGenerator = new("Generators", "Open Video Generator", KeyCode.None, "Opens the Video Generator");
+    private Setting<KeyCode> OpenMusicGenerator = new("Generators", "Open Music Generator", KeyCode.None, "Opens the Music Generator");
 
-    private Setting<KeyCode> CreateTogglers = new("Generators", "Create Togglers", KeyCode.None, "Create togglers for the current selection");
-    private Setting<KeyCode> HideLogic = new("Generators", "Hide Logic Blocks", KeyCode.None, "Set all logic blocks to hide in game");
-    private Setting<KeyCode> ShowLogic = new("Generators", "Show Logic Blocks", KeyCode.None, "Set all logic blocks to show in game");
+    private Setting<KeyCode> CreateTogglers = new("Shortcuts", "Create Togglers", KeyCode.None, "Create togglers for the current selection");
+    private Setting<KeyCode> HideLogic = new("Shortcuts", "Hide Logic Blocks", KeyCode.None, "Set all logic blocks to hide in game");
+    private Setting<KeyCode> ShowLogic = new("Shortcuts", "Show Logic Blocks", KeyCode.None, "Set all logic blocks to show in game");
 
-    private Setting<KeyCode> VideoGenerator = new("Generators", "Open Video Generator", KeyCode.None, "Opens the Video Generator");
+    private Setting<KeyCode> ToggleTogglerVisualizer = new("Visuals", "Toggle Toggler Visualizers", KeyCode.None, "Toggles wether or not the visualizer lines for togglers spawn");
+    private Setting<KeyCode> ToggleConnectionVisibility = new("Visuals", "Toggle Connection Visibility", KeyCode.None, "Toggles the connection visibility");
 
-    private Setting<KeyCode> ToggleTogglerVisualizer = new("Visuals", "Toggle Toggler Vizualizers", KeyCode.None, "Toggles wether or not the visualizer lines for togglers spawn");
-    private Setting<KeyCode> ToggleConnectionVisibility = new("Visuals", "Toggle Connection Vizibility", KeyCode.None, "Toggles the connection visibility");
+    private (Setting<KeyCode>, Drawer)[] Drawers = [];
 
 
     public void Awake()
@@ -54,41 +61,47 @@ public class Plugin : BaseUnityPlugin
         harmony = new Harmony(PluginInfo.PLUGIN_GUID);
         harmony.PatchAll();
 
-        UIApi.AddZeepGUIDrawer(RomGeneratorDrawer);
-        UIApi.AddZeepGUIDrawer(VideoGeneratorDrawer);
+        Drawers = [
+            (OpenGenerators, GeneratorsDrawer),
+            (OpenRomGenerator, RomGeneratorDrawer),
+            (OpenVideoGenerator, VideoGeneratorDrawer),
+            (OpenMusicGenerator, MusicGeneratorDrawer),
+            ];
+
+        GeneratorsDrawer.Generators = [RomGeneratorDrawer, VideoGeneratorDrawer, MusicGeneratorDrawer];
+
+        foreach ((Setting<KeyCode> _, Drawer drawer) in Drawers)
+        {
+            UIApi.AddZeepGUIDrawer(drawer);
+        }
 
         OldLogicPlugin = new(Config);
 
         LevelEditorApi.EnteredLevelEditor += EnteredLevelEditor;
         LevelEditorApi.ExitedLevelEditor += ExitedLevelEditor;
+        LevelEditorApi.SelectionChanged += SelectionChanged;
 
         PluginLoaded = true;
-        SettingsManager.HandleBacklog();
-
-        SettingsApi.ConfigureModSettingsTabs(this, (tabs) =>
-        {
-            tabs.Tab("LogicV2", "Generators");
-        });
 
         Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
     }
+
+    public void Start()
+    {
+        SettingsManager.HandleBacklog();
+    }
+
 
     public void Update()
     {
         MainThreadScheduler.Update();
 
+
         if (LevelEditorApi.IsInLevelEditor && !LevelEditorApi.IsKeyboardInputBlocked)
         {
-            if (OpenRomGenerator.KeyDown())
+            foreach ((Setting<KeyCode> key, Drawer drawer) in Drawers)
             {
-                if (RomGeneratorDrawer.CanOpen()) RomGeneratorDrawer.Open();
-                else if (RomGeneratorDrawer.IsOpen()) RomGeneratorDrawer.Close();
-            }
-
-            if (VideoGenerator.KeyDown())
-            {
-                if (VideoGeneratorDrawer.CanOpen()) VideoGeneratorDrawer.Open();
-                else if (VideoGeneratorDrawer.IsOpen()) VideoGeneratorDrawer.Close();
+                if (key.KeyDown()) drawer.Toggle();
             }
 
             if (SelectionOpperations.CanOpperateOnSelection())
@@ -116,17 +129,28 @@ public class Plugin : BaseUnityPlugin
     private void ExitedLevelEditor()
     {
         Logger.LogInfo("Exiting level editor!");
-
         Central = null;
-        RomGeneratorDrawer?.Close();
-        VideoGeneratorDrawer?.Close();
+
+        ConnectionVisibility.ExitedLevelEditor();
+
+        foreach ((Setting<KeyCode> _, Drawer drawer) in Drawers)
+        {
+            drawer.Close();
+        }
+    }
+
+    private void SelectionChanged(List<BlockProperties> selection)
+    {
+        ConnectionVisibility.SelectionChanged(selection);
     }
 
 
     public void OnDestroy()
     {
-        UIApi.RemoveZeepGUIDrawer(RomGeneratorDrawer);
-        UIApi.RemoveZeepGUIDrawer(VideoGeneratorDrawer);
+        foreach ((Setting<KeyCode> _, Drawer drawer) in Drawers)
+        {
+            UIApi.RemoveZeepGUIDrawer(drawer);
+        }
 
 
         OldLogicPlugin?.OnDestroy();
@@ -135,5 +159,6 @@ public class Plugin : BaseUnityPlugin
         harmony = null;
         LevelEditorApi.EnteredLevelEditor -= EnteredLevelEditor;
         LevelEditorApi.ExitedLevelEditor -= ExitedLevelEditor;
+        LevelEditorApi.SelectionChanged -= SelectionChanged;
     }
 }

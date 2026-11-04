@@ -13,27 +13,29 @@ using ZeepSDK.LevelEditor;
 using ZeepSDK.Messaging;
 using ZeepSDK.UI;
 
-namespace LogicLink.LogicV2
+namespace LogicLink.LogicV2.Drawers
 {
-    public class VideoGeneratorDrawer : IZeepGUIDrawer
+    public class VideoGeneratorDrawer : Drawer
     {
-        private bool _windowOpen = false;
+        public override int Height => 700;
+        public override int Width => 500;
+        public override string Title => "Video Generator";
 
-        private Setting<string> PathSetting = new("Generators", "VideoFilePath", String.Empty, "The video file to convert", hidden: true);
+        private Setting<string> PathSetting = new("Generators", "VideoFilePath", string.Empty, "The video file to convert", hidden: true);
         private List<string> ErrorMessages = [];
-        private string ConvertErrorMessage = String.Empty;
+        private string ConvertErrorMessage = string.Empty;
 
         private Setting<string> TicksPerFrameStr = new("Generators", "Ticks Per Frame", 20.ToString(), "How many ticks are between frames", hidden: true);
         private Setting<string> WidthStr = new("Generators", "Video Width", (VideoConverter.signWidth * 3).ToString(), "Width of the video in pixels", hidden: true);
-        private Setting<string> StartTimeStr = new("Generators", "Video Start Time", String.Empty, "Where the converters starts", hidden: true);
-        private Setting<string> EndTimeStr = new("Generators", "Video End Time", String.Empty, "Where the converter ends", hidden: true);
+        private Setting<string> StartTimeStr = new("Generators", "Video Start Time", string.Empty, "Where the converters starts", hidden: true);
+        private Setting<string> EndTimeStr = new("Generators", "Video End Time", string.Empty, "Where the converter ends", hidden: true);
 
         private int TicksPerFrame;
-        private int Width;
+        private int FrameWidth;
         private double StartTime;
         private double EndTime;
 
-        private string FileName = String.Empty;
+        private string FileName = string.Empty;
 
         private Thread ConvertThread;
         private int CurrentFrame;
@@ -45,38 +47,11 @@ namespace LogicLink.LogicV2
         private ConvertingStage ConvertingVideoState = ConvertingStage.NoFile;
 
 
-        public void Open()
+        public override void DrawGUI(ImGui gui)
         {
-            if (!CanOpen()) return;
-            _windowOpen = true;
-        }
-
-        public void Close()
-        {
-            _windowOpen = false;
-        }
-
-        public bool CanOpen()
-        {
-            return !_windowOpen && Plugin.Central != null && LevelEditorApi.IsInLevelEditor;
-        }
-
-        public bool IsOpen()
-        {
-            return _windowOpen;
-        }
-
-        public void OnZeepGUI(ImGui gui)
-        {
-            int width = 700;
-            int height = 500;
-            if (!_windowOpen || !gui.BeginWindow("Video Generator", ref _windowOpen, (width, height))) return;
-
             if (ConvertingVideoState == ConvertingStage.NoFile) DrawFileSelection(gui);
             else if (ConvertingVideoState == ConvertingStage.ConvertingVideo) DrawConvertingStage(gui);
             else if (ConvertingVideoState == ConvertingStage.ReadyToLoad) DrawReadyToLoadStage(gui);
-
-            gui.EndWindow();
         }
 
 
@@ -85,36 +60,29 @@ namespace LogicLink.LogicV2
             gui.Text("File Path:", new ImTextSettings(16));
             PathSetting.Value = gui.TextEdit(PathSetting);
 
-            //using (gui.Horizontal())
+            using (gui.Vertical())
             {
-                using (gui.Vertical())
-                {
-                    gui.Text("Ticks Per Frame");
-                    TicksPerFrameStr.Value = gui.TextEdit(TicksPerFrameStr);
-                }
-                using (gui.Vertical())
-                {
-                    gui.Text("Pixel Width");
-                    WidthStr.Value = gui.TextEdit(WidthStr);
-                    gui.TooltipAtLastControl($"Every sign has a {VideoConverter.signWidth} pixel width");
-                }
+                gui.Text("Ticks Per Frame");
+                TicksPerFrameStr.Value = gui.TextEdit(TicksPerFrameStr);
+            }
+            using (gui.Vertical())
+            {
+                gui.Text("Pixel Width");
+                WidthStr.Value = gui.TextEdit(WidthStr);
+                gui.TooltipAtLastControl($"Every sign has a {VideoConverter.signWidth} pixel width");
             }
 
-            //using (gui.Horizontal())
+            using (gui.Vertical())
             {
-                using (gui.Vertical())
-                {
-                    gui.Text("Start Time");
-                    StartTimeStr.Value = gui.TextEdit(StartTimeStr);
-                    gui.TooltipAtLastControl("Start Time in seconds, leave empty to start at the beginning of the video");
-
-                }
-                using (gui.Vertical())
-                {
-                    gui.Text("End Time");
-                    EndTimeStr.Value = gui.TextEdit(EndTimeStr);
-                    gui.TooltipAtLastControl("End Time in seconds, leave empty to stop at the end of the video");
-                }
+                gui.Text("Start Time");
+                StartTimeStr.Value = gui.TextEdit(StartTimeStr);
+                gui.TooltipAtLastControl("Start Time in seconds, leave empty to start at the beginning of the video");
+            }
+            using (gui.Vertical())
+            {
+                gui.Text("End Time");
+                EndTimeStr.Value = gui.TextEdit(EndTimeStr);
+                gui.TooltipAtLastControl("End Time in seconds, leave empty to stop at the end of the video");
             }
 
             ParseSettings();
@@ -123,7 +91,7 @@ namespace LogicLink.LogicV2
                 gui.Text(message, new ImTextSettings(12), new Color32(200, 0, 0, 255));
             }
 
-            using (gui.Vertical(30, 30)) { }
+            gui.AddSpacing(30);
             if (gui.Button("Convert Video"))
             {
                 Plugin.Logger.LogInfo($"Video Generator - Converting '{PathSetting}'");
@@ -131,7 +99,7 @@ namespace LogicLink.LogicV2
             }
             if (!string.IsNullOrWhiteSpace(ConvertErrorMessage)) gui.Text(ConvertErrorMessage, new ImTextSettings(12), new Color32(200, 0, 0, 255));
 
-            using (gui.Vertical(5, 5)) { }
+            gui.AddSpacing(5);
             gui.Text("Powered by Murrl's and Tera's png to sign converter!", new ImTextSettings(15));
         }
 
@@ -139,7 +107,7 @@ namespace LogicLink.LogicV2
         {
             ErrorMessages.Clear();
             if (!int.TryParse(TicksPerFrameStr, out TicksPerFrame)) ErrorMessages.Add("Could not parse Ticks Per Frame!");
-            if (!int.TryParse(WidthStr, out Width)) ErrorMessages.Add("Could not parse Width!");
+            if (!int.TryParse(WidthStr, out FrameWidth)) ErrorMessages.Add("Could not parse Width!");
             if (!double.TryParse(StartTimeStr, out StartTime))
             {
                 if (string.IsNullOrWhiteSpace(StartTimeStr)) StartTime = 0;
@@ -156,10 +124,10 @@ namespace LogicLink.LogicV2
         private void DrawConvertingStage(ImGui gui)
         {
             gui.Text($"Converting '{FileName}'...", true);
-            gui.Text($"Frame {CurrentFrame}/{TotalFrames}");
-            gui.Text($"Blocks {TotalBlocks}");
-            using (gui.Vertical(30, 30)) { }
-            gui.Text("You can close this window in the meantime", new ImTextSettings(12));
+            gui.Text($"Frame: {CurrentFrame}/{TotalFrames}");
+            gui.Text($"Blocks: {TotalBlocks}");
+            gui.AddSpacing(30);
+            gui.Text("You can close this window in the meantime!", new ImTextSettings(12));
             if (gui.Button(!Abort ? "Cancel" : "Canceling..."))
             {
                 Abort = true;
@@ -171,19 +139,19 @@ namespace LogicLink.LogicV2
         {
             gui.Text($"Converted '{FileName}'", true);
             gui.Text($"Generated {TotalFrames} Frames - {TotalBlocks} Blocks");
-            using (gui.Vertical(30, 30)) { }
+            gui.AddSpacing(30);
             gui.Text("Expect a lag spike when pasting", new ImTextSettings(12));
+            gui.Text("Pasting will disable toggler visualizers to decrease load time", new ImTextSettings(12));
+            gui.AddSpacing(4);
             using (gui.Horizontal())
             {
-                if (gui.Button("Paste"))
+                if (gui.Button("Paste", (200, 30)))
                 {
-                    _windowOpen = false;
+                    Close();
                     LogicScript_Door_VisualizeToggler.ShouldSkip = true;
                     Blocks.ToBlueprint("VideoConverter").PasteIntoEditor(Plugin.Central, true);
-                    Blocks.Clear();
-                    ConvertingVideoState = ConvertingStage.NoFile;
                 }
-                if (gui.Button("Unload"))
+                if (gui.Button("Unload", (200, 30)))
                 {
                     Blocks.Clear();
                     ConvertingVideoState = ConvertingStage.NoFile;
@@ -221,7 +189,7 @@ namespace LogicLink.LogicV2
                 TimeSpan startTime = Mathf.Approximately((float)StartTime, 0) ? new(0) : TimeSpan.FromSeconds(StartTime);
                 TimeSpan endTime = Mathf.Approximately((float)EndTime, 0) ? new(0) : TimeSpan.FromSeconds(EndTime);
 
-                Blocks = VideoConverter.ConvertVideo(path, TicksPerFrame, Width, startTime, endTime, ref CurrentFrame, ref TotalFrames, ref TotalBlocks, ref Abort);
+                Blocks = VideoConverter.ConvertVideo(path, TicksPerFrame, FrameWidth, startTime, endTime, ref CurrentFrame, ref TotalFrames, ref TotalBlocks, ref Abort);
                 if (Blocks == null || Abort)
                 {
                     ConvertingVideoState = ConvertingStage.NoFile;

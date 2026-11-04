@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LogicLink.Generator.Blocks
 {
-    internal class MusicBlock : Block
+    public class MusicBlock : Block
     {
         private const string referenceJson = "{\"i\":2279,\"u\":\"iu66kuPR0EKM_oi2279\",\"p\":{\"x\":-16,\"y\":0,\"z\":-464},\"r\":{\"x\":0,\"y\":0,\"z\":0},\"s\":{\"x\":1,\"y\":1,\"z\":1},\"d\":{\"n\":{\"n6\":4,\"n8\":1}}}";
 
